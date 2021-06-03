@@ -145,7 +145,10 @@ func patchSilabs() {
 
 	data, err := ioutil.ReadFile("/bin/silabs_ncp_bt")
 	if err != nil {
-		log.Fatalln(err)
+		data, err = ioutil.ReadFile("/usr/app/bin/silabs_ncp_bt")
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	// same length before and after
