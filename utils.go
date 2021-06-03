@@ -153,6 +153,7 @@ func patchSilabs() {
 
 	// same length before and after
 	data = bytes.Replace(data, []byte("/data/miio/mible_loc"), []byte("/tmp/mible_local.db\x00"), 1)
+	data = bytes.Replace(data, []byte("/data/miio/sbt_recor"), []byte("/tmp/sbt_record_db_\x00"), 1)
 
 	err = ioutil.WriteFile("/tmp/silabs_ncp_bt", data, 0x777)
 	if err != nil {
