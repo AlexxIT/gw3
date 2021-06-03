@@ -1,0 +1,17 @@
+github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
+github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
+github.com/huin/gobinarytest v0.0.0-20170803182140-bc6c19e91749 h1:uEtvxEWZtnFRuUUyJl214tS14+BMi7iO7up/Rx4CejY=
+github.com/huin/gobinarytest v0.0.0-20170803182140-bc6c19e91749/go.mod h1:NLS5Is63wKCuzcJLN28yt3sm/Ps9OXNd9GPUlO4wfFA=
+github.com/huin/mqtt v0.0.0-20200914141616-61735481eb15 h1:BT2uKnsrOQvQzZjFIpDMMfHFV7O5nX7Sc5ekEJjojbM=
+github.com/huin/mqtt v0.0.0-20200914141616-61735481eb15/go.mod h1:zbO4h3NDGxpAVWGYzQNle+BDfuwm8fWcgVxFuIHyuas=
+github.com/jeffallen/mqtt v0.0.0-20180518073322-5387cfa89df0 h1:ESdZtIOKF9F7Ah9lbdKyc0xiioZvnGe3XrvXzgEka0Y=
+github.com/jeffallen/mqtt v0.0.0-20180518073322-5387cfa89df0/go.mod h1:5VmMaANxUXHvNfKSdcjuEYlAFnxsu6vVAr6kgQOoUG4=
+github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZbAQM=
+github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZNVY4sRDYZ/4=
+github.com/sirupsen/logrus v1.8.1 h1:dJKuHgqk1NNQlqoA6BTlM1Wf9DOH3NBjQyu0h9+AZZE=
+github.com/sirupsen/logrus v1.8.1/go.mod h1:yWOB1SBYBC5VeMP7gHvWumXLIWorT60ONWic61uBYv0=
+github.com/stretchr/testify v1.2.2 h1:bSDNvY7ZPG5RlJ8otE/7V6gMiyenm9RtJ7IUVIAoJ1w=
+github.com/stretchr/testify v1.2.2/go.mod h1:a8OnRcib4nhh0OaRAV+Yts87kKdq0PP7pXfy6kDkUVs=
+golang.org/x/sys v0.0.0-20191026070338-33540a1f6037/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea h1:+WiDlPBBaO+h9vPNZi8uJ3k4BkKQB7Iow3aqwHVA5hI=
+golang.org/x/sys v0.0.0-20210525143221-35b2ab0089ea/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
