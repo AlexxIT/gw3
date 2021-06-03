@@ -69,7 +69,20 @@ func processExtResponse(data []byte) int {
 
 	msg := gap.ParseScanResponse(data[1 : n-1])
 	if msg != nil {
-		if msg.ServiceUUID == 0xFE95 {
+		switch msg.ServiceUUID {
+		case 0x181A:
+			msg.Data = gap.ParseATC1441(msg.Raw[0x16][2:])
+			msg.Useful = 2
+
+		case 0x181B:
+			msg.Data = gap.ParseMiScalesV2(msg.Raw[0x16][2:])
+			msg.Useful = 2
+
+		case 0x181D:
+			msg.Data = gap.ParseMiScalesV1(msg.Raw[0x16][2:])
+			msg.Useful = 2
+
+		case 0xFE95:
 			mibeacon, useful := gap.ParseMiBeacon(msg.Raw[0x16][2:], config.Bindkeys())
 			msg.Data = mibeacon
 			// is encrypted
@@ -79,6 +92,7 @@ func processExtResponse(data []byte) int {
 				msg.Useful = useful
 			}
 		}
+
 		payload, err := json.Marshal(msg)
 		if err == nil {
 			log.Traceln("Publish:", string(payload))

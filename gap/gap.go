@@ -20,15 +20,15 @@ type MiBeacon struct {
 
 type GAPMessage struct {
 	PacketType byte   `json:"type"`
-	Address    string `json:"addr"`
-	AddrRand   byte   `json:"rand"`
+	MAC        string `json:"mac"`
+	Rand       byte   `json:"rand"`
 	RSSI       int8   `json:"rssi"`
 
 	Brand   string `json:"brand,omitempty"`
 	Comment string `json:"comment,omitempty"`
 	Useful  byte   `json:"useful"`
 
-	ServiceUUID uint16 `json:"suuid,omitempty"`
+	ServiceUUID uint16 `json:"uuid,omitempty"`
 	Raw         RawGAP `json:"raw"`
 
 	Data interface{} `json:"data,omitempty"`
@@ -71,8 +71,8 @@ func SprintMAC(b []byte) string {
 func ParseScanResponse(data []byte) *GAPMessage {
 	msg := &GAPMessage{
 		PacketType: data[5],
-		Address:    SprintMAC(data[6:12]),
-		AddrRand:   data[12],
+		MAC:        SprintMAC(data[6:12]),
+		Rand:       data[12],
 		RSSI:       int8(data[4]),
 		Raw:        make(RawGAP),
 	}
@@ -281,4 +281,92 @@ func MiBeaconDecode4(mibeacon []byte, pos int, key string) []byte {
 	}
 
 	return plain
+}
+
+type ATC1441 struct {
+	Temperature float32 `json:"temperature"`
+	Humidity    float32 `json:"humidity"`
+	Voltage     uint16  `json:"voltage"`
+	Battery     uint8   `json:"battery"`
+	Seq         uint8   `json:"seq"`
+}
+
+func ParseATC1441(b []byte) *ATC1441 {
+	// without len, 0x16 and 0x181A
+	switch len(b) {
+	case 13: // atc1441
+		return &ATC1441{
+			Temperature: float32(int16(binary.BigEndian.Uint16(b[6:]))) / 10,
+			Humidity:    float32(b[8]),
+			Battery:     b[9],
+			Voltage:     binary.BigEndian.Uint16(b[10:]),
+			Seq:         b[12],
+		}
+	case 15: // pvvx
+		return &ATC1441{
+			Temperature: float32(int16(binary.LittleEndian.Uint16(b[6:]))) / 100,
+			Humidity:    float32(binary.LittleEndian.Uint16(b[8:])) / 100,
+			Voltage:     binary.LittleEndian.Uint16(b[10:]),
+			Battery:     b[12],
+			Seq:         b[13],
+		}
+	}
+	return nil
+}
+
+type MiScales struct {
+	Weight     float32 `json:"weight,omitempty"`
+	WeightKg   float32 `json:"weight_kg,omitempty"`
+	WeightLb   float32 `json:"weight_lb,omitempty"`
+	Impedance  uint16  `json:"impedance,omitempty"`
+	Stabilized bool    `json:"stabilized"`
+	Removed    bool    `json:"removed"`
+}
+
+// ParseMiScalesV1
+// https://github.com/G1K/EspruinoHub/blob/3f3946206b81ea700493621f61c6d6e380b4ff0d/lib/attributes.js#L104
+func ParseMiScalesV1(b []byte) *MiScales {
+	result := &MiScales{
+		Stabilized: b[0]&0b100000 > 0,
+		Removed:    b[0]&0b10000000 > 0,
+	}
+
+	weight := float32(binary.LittleEndian.Uint16(b[1:]))
+
+	switch {
+	case b[0]&0b10000 > 0:
+		result.Weight = weight / 100
+	case b[0]&0b1 > 0:
+		result.WeightLb = weight / 100
+	default:
+		result.WeightKg = weight / 200
+	}
+
+	return result
+}
+
+// ParseMiScalesV2
+// https://github.com/G1K/EspruinoHub/blob/3f3946206b81ea700493621f61c6d6e380b4ff0d/lib/attributes.js#L78
+func ParseMiScalesV2(b []byte) *MiScales {
+	result := &MiScales{
+		Stabilized: b[1]&0b100000 > 0,
+		Removed:    b[1]&0b10000000 > 0,
+	}
+
+	if b[1]&0b10 > 0 {
+		result.Impedance = binary.LittleEndian.Uint16(b[9:])
+	}
+
+	weight := float32(binary.LittleEndian.Uint16(b[11:]))
+
+	switch b[0] {
+	case 0b10000:
+		result.Weight = weight / 100
+	case 3:
+		result.WeightLb = weight / 100
+	case 2:
+		result.WeightKg = weight / 200
+	}
+
+	return result
 }
