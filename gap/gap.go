@@ -25,6 +25,7 @@ type GAPMessage struct {
 	RSSI       int8   `json:"rssi"`
 
 	Brand   string `json:"brand,omitempty"`
+	Name    string `json:"name,omitempty"`
 	Comment string `json:"comment,omitempty"`
 	Useful  byte   `json:"useful"`
 
@@ -97,6 +98,8 @@ func ParseScanResponse(data []byte) *GAPMessage {
 		msg.Raw[advType] = data[i+2 : i+l+1]
 
 		switch advType {
+		case 0x08, 0x09:
+			msg.Name = string(data[i+2 : i+l+1])
 		case 0x16:
 			msg.ServiceUUID = binary.LittleEndian.Uint16(data[i+2:])
 			switch msg.ServiceUUID {
