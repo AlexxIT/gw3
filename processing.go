@@ -93,6 +93,14 @@ func processExtResponse(data []byte) int {
 			}
 		}
 
+		switch msg.CompanyID {
+		case 0x004C:
+			if msg.Raw[0xFF][2] == 2 && msg.Raw[0xFF][3] == 0x15 {
+				msg.Data = gap.ParseIBeacon(msg.Raw[0xFF][2:])
+				msg.Useful = 2
+			}
+		}
+
 		payload, err := json.Marshal(msg)
 		if err == nil {
 			log.Traceln("Publish:", string(payload))

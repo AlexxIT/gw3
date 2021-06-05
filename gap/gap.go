@@ -29,8 +29,11 @@ type GAPMessage struct {
 	Comment string `json:"comment,omitempty"`
 	Useful  byte   `json:"useful"`
 
+	// https://btprodspecificationrefs.blob.core.windows.net/assigned-values/16-bit%20UUID%20Numbers%20Document.pdf
 	ServiceUUID uint16 `json:"uuid,omitempty"`
-	Raw         RawGAP `json:"raw"`
+	// https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/
+	CompanyID uint16 `json:"cid,omitempty"`
+	Raw       RawGAP `json:"raw"`
 
 	Data interface{} `json:"data,omitempty"`
 }
@@ -119,11 +122,11 @@ func ParseScanResponse(data []byte) *GAPMessage {
 			msg.Comment = "Mesh Beacon"
 			msg.Useful = 0
 		case 0xFF:
-			manufID := binary.LittleEndian.Uint16(data[i+2:])
-			if val, ok := Brands[manufID]; ok {
+			msg.CompanyID = binary.LittleEndian.Uint16(data[i+2:])
+			if val, ok := Brands[msg.CompanyID]; ok {
 				msg.Brand = val
 			} else {
-				msg.Brand = fmt.Sprintf("0x%04X", manufID)
+				msg.Brand = fmt.Sprintf("0x%04X", msg.CompanyID)
 			}
 			msg.Useful = 1
 		}
@@ -372,4 +375,20 @@ func ParseMiScalesV2(b []byte) *MiScales {
 	}
 
 	return result
+}
+
+type IBeacon struct {
+	UUID  string `json:"uuid"`
+	Major uint16 `json:"major"`
+	Minor uint16 `json:"minor"`
+	Tx    int8   `json:"tx"`
+}
+
+func ParseIBeacon(b []byte) *IBeacon {
+	return &IBeacon{
+		UUID:  hex.EncodeToString(b[2:18]),
+		Major: binary.BigEndian.Uint16(b[18:]),
+		Minor: binary.BigEndian.Uint16(b[20:]),
+		Tx:    int8(b[22]),
+	}
 }
