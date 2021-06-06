@@ -94,11 +94,14 @@ func processExtResponse(data []byte) int {
 		}
 
 		switch msg.CompanyID {
-		case 0x004C:
+		case 0x004C: // iBeacon
 			if msg.Raw[0xFF][2] == 2 && msg.Raw[0xFF][3] == 0x15 {
 				msg.Data = gap.ParseIBeacon(msg.Raw[0xFF][2:])
 				msg.Useful = 2
 			}
+		case 0x0157: // MiBand or Amazfit Watch
+			// don't know how to parse payload, but can be used as tracker
+			msg.Useful = 2
 		}
 
 		payload, err := json.Marshal(msg)
