@@ -125,8 +125,6 @@ func ParseScanResponse(data []byte) *GAPMessage {
 			msg.CompanyID = binary.LittleEndian.Uint16(data[i+2:])
 			if val, ok := Brands[msg.CompanyID]; ok {
 				msg.Brand = val
-			} else {
-				msg.Brand = fmt.Sprintf("0x%04X", msg.CompanyID)
 			}
 			msg.Useful = 1
 		}

@@ -99,9 +99,16 @@ func processExtResponse(data []byte) int {
 				msg.Data = gap.ParseIBeacon(msg.Raw[0xFF][2:])
 				msg.Useful = 2
 			}
+		case 0x00D2: // Nut
+			msg.Useful = 2
 		case 0x0157: // MiBand or Amazfit Watch
 			// don't know how to parse payload, but can be used as tracker
 			msg.Useful = 2
+		}
+
+		if config.filter == 2 {
+			// don't need raw payload in usual mode
+			msg.Raw = nil
 		}
 
 		payload, err := json.Marshal(msg)
