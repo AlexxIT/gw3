@@ -14,12 +14,15 @@ import (
 	"net"
 	"os"
 	"os/exec"
+	"time"
 )
 
+// Config
+
 type Config struct {
-	autoSilabs bool
-	filter     int
-	Mqtt       struct {
+	silabs bool
+	filter int
+	Mqtt   struct {
 		Host string `json:"host,omitempty"`
 		User string `json:"user,omitempty"`
 		Pass string `json:"pass,omitempty"`
@@ -79,7 +82,7 @@ func initConfig() *Config {
 		conf.Mqtt.Host = "localhost:1883"
 	}
 
-	flag.BoolVar(&conf.autoSilabs, "autosilabs", true, "Auto handle silabs_ncp_bt")
+	flag.BoolVar(&conf.silabs, "silabs", true, "Auto handle silabs_ncp_bt")
 	flag.IntVar(&conf.filter, "filter", 2, "Filter BLE messages: 0 All, 1 Interesting, 2 Useful")
 	ll := flag.Int("log", 3, "Log level: 1 Fatal, 3 Warning, 4 Info, 5 Debug, 6 Trace")
 
@@ -89,6 +92,41 @@ func initConfig() *Config {
 
 	return &conf
 }
+
+// Cache
+
+type Cache struct {
+	cache map[string]time.Time
+	clear time.Time
+}
+
+func NewCache() *Cache {
+	return &Cache{cache: make(map[string]time.Time), clear: time.Now()}
+}
+
+func (self *Cache) Test(key string) bool {
+	now := time.Now()
+	if self.clear.After(now) {
+		for k, v := range self.cache {
+			if now.After(v) {
+				delete(self.cache, k)
+			}
+		}
+		// clear cache once per minute
+		self.clear = now.Add(time.Minute)
+	}
+
+	if ts, ok := self.cache[key]; ok && now.Before(ts) {
+		return true
+	}
+
+	// put key in cache on 5 seconds
+	self.cache[key] = now.Add(time.Second * 5)
+
+	return false
+}
+
+// other
 
 func initMQTT() {
 	conn, err := net.Dial("tcp", config.Mqtt.Host)
@@ -113,7 +151,7 @@ func initSerials() (uart io.ReadWriteCloser, silabs io.ReadWriteCloser) {
 		BaudRate:        115200,
 		DataBits:        8,
 		StopBits:        1,
-		MinimumReadSize: 3,
+		MinimumReadSize: 1,
 		//RTSCTSFlowControl: true,
 	})
 	if err != nil {

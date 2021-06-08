@@ -23,14 +23,14 @@ func main() {
 		initMQTT()
 	}
 
-	if config.autoSilabs {
+	if config.silabs {
 		log.Infoln("Kill daemon_miio.sh and silabs_ncp_bt")
 		_ = exec.Command("killall", "daemon_miio.sh", "silabs_ncp_bt").Run()
 	}
 
 	uart, silabs := initSerials()
 
-	if config.autoSilabs {
+	if config.silabs {
 		patchSilabs()
 
 		go func() {

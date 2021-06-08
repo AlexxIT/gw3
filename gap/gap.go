@@ -33,7 +33,7 @@ type GAPMessage struct {
 	ServiceUUID uint16 `json:"uuid,omitempty"`
 	// https://www.bluetooth.com/specifications/assigned-numbers/company-identifiers/
 	CompanyID uint16 `json:"cid,omitempty"`
-	Raw       RawGAP `json:"raw"`
+	Raw       RawGAP `json:"raw,omitempty"`
 
 	Data interface{} `json:"data,omitempty"`
 }
