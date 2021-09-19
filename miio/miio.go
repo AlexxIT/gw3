@@ -3,77 +3,44 @@ package miio
 import (
 	"encoding/json"
 	"fmt"
-	log "github.com/sirupsen/logrus"
-	"net"
+	"github.com/rs/zerolog/log"
 	"time"
 )
 
-type Miio struct {
-	conn    net.Conn
-	queries map[string]time.Time
-	id      int
+const (
+	BleQueryDev   = "_sync.ble_query_dev"
+	GetProperties = "get_properties"
+)
+
+var requests = make(map[uint32]string)
+
+func EncodeBind(addr uint8) []byte {
+	return []byte(fmt.Sprintf(`{"method":"bind","address":%d}`, addr))
+}
+
+func EncodeBleQueryDev(mac string, pdid uint16) []byte {
+	id := uint32(time.Now().Nanosecond()) & 0xFFFFFF
+	requests[id] = BleQueryDev
+
+	return []byte(fmt.Sprintf(
+		`{"id":%d,"method":"%s","params":{"mac":"%s","pdid":%d}}`,
+		id, BleQueryDev, mac, pdid,
+	))
 }
 
 type Response struct {
-	Id     int `json:"id"`
-	Result struct {
-		Operation string `json:"operation"`
-		Mac       string `json:"mac"`
-		Beaconkey string `json:"beaconkey"`
-	} `json:"result"`
+	id uint32
 }
 
-func NewClient() *Miio {
-	conn, err := net.Dial("unixpacket", "/tmp/miio_agent.socket")
-	if err != nil {
-		panic(err)
-	}
-	_, err = conn.Write([]byte("{\"method\":\"bind\",\"address\":128}\n"))
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	return &Miio{conn: conn, queries: make(map[string]time.Time)}
-}
-
-func (self *Miio) Start(handler func(string, string)) {
-	buf := make([]byte, 1024)
-	for {
-		n, err := self.conn.Read(buf)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		log.Debugln("Miio:", string(buf[:n]))
-
-		var resp Response
-		err = json.Unmarshal(buf[:n], &resp)
-		if err != nil {
-			log.Warnln(err)
-			continue
-		}
-		if resp.Result.Operation == "query_dev" {
-			handler(resp.Result.Mac, resp.Result.Beaconkey)
+func DecodeMethod(p []byte) string {
+	payload := Response{}
+	if err := json.Unmarshal(p, &payload); err != nil {
+		log.Warn().Err(err).Send()
+	} else {
+		if method, ok := requests[payload.id]; ok {
+			delete(requests, payload.id)
+			return method
 		}
 	}
-}
-
-func (self *Miio) BleQueryDev(mac string, pdid uint16) {
-	// not more than once in 30 minutes
-	now := time.Now()
-	if ts, ok := self.queries[mac]; ok && now.Before(ts) {
-		return
-	}
-	self.queries[mac] = now.Add(time.Minute * 30)
-
-	log.Debugln("Query bindkey for", mac)
-
-	self.id += 1
-	payload := fmt.Sprintf(`{"method":"_sync.ble_query_dev","params":{"mac":"%s","pdid":%d},"id":%d}`,
-		mac, pdid, self.id)
-
-	_, err := self.conn.Write([]byte(payload))
-	if err != nil {
-		log.Warnln(err)
-	}
+	return ""
 }

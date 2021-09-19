@@ -1,4 +1,8 @@
-# https://sourceforge.net/p/forge/documentation/Release%20Files%20for%20Download/#scp
+"""
+Upload gw3 binary to sourceforge.net with username and password from os environments. And prints md5 of binary.
+
+https://sourceforge.net/p/forge/documentation/Release%20Files%20for%20Download/#scp
+"""
 import hashlib
 import io
 import os
@@ -17,7 +21,7 @@ ssh.connect(
 
 scp = SCPClient(ssh.get_transport())
 
-raw = open('bin/gw3', 'rb').read()
+raw = open('gw3', 'rb').read()
 hex_ = hashlib.md5(raw).hexdigest()
 print(hex_)
 

@@ -1,59 +1,141 @@
 package main
 
 import (
-	proto "github.com/huin/mqtt"
-	"github.com/jeffallen/mqtt"
-	log "github.com/sirupsen/logrus"
-	"gw3/miio"
-	"os/exec"
-	"time"
+	"encoding/json"
+	"flag"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
+	"io"
+	"io/ioutil"
+	"os"
+	"strings"
 )
 
 var (
-	config      *Config
-	miioClient  *miio.Miio
-	mqttClient  *mqtt.ClientConn
-	mqttPayload *proto.Publish
+	config  = &Config{}
+	devices = make(map[string]interface{})
+	gw      *GatewayDevice
 )
 
 func main() {
-	config = initConfig()
+	mainInitLogger()
+	mainInitConfig()
 
-	if config.Mqtt.Host != "" {
-		initMQTT()
+	silabsStop()
+
+	btappInit()
+	btchipInit()
+
+	silabsStart()
+
+	go btchipReader()
+	go btchipWriter()
+
+	go btappReader()
+	go mqttReader()
+	go miioReader()
+
+	select {} // run forever
+}
+
+var (
+	// additional log levels for advanced output
+	btraw   = zerolog.Disabled
+	btgap   = zerolog.Disabled
+	//mqttraw = zerolog.Disabled
+	miioraw = zerolog.Disabled
+)
+
+func mainInitLogger() {
+	logs := flag.String("log", "", "sets log level to debug")
+	logfile := flag.String("logfile", "", "output log into file instead of stdout")
+
+	flag.Parse()
+
+	if strings.Contains(*logs, "trace") {
+		zerolog.SetGlobalLevel(zerolog.TraceLevel)
+	} else if strings.Contains(*logs, "debug") {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	} else if strings.Contains(*logs, "info") {
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	} else {
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
 
-	if config.silabs {
-		log.Infoln("Kill daemon_miio.sh and silabs_ncp_bt")
-		_ = exec.Command("killall", "daemon_miio.sh", "silabs_ncp_bt").Run()
+	if strings.Contains(*logs, "btraw") {
+		btraw = zerolog.NoLevel
+	}
+	if strings.Contains(*logs, "btgap") {
+		btgap = zerolog.NoLevel
+	}
+	//if strings.Contains(*logs, "mqtt") {
+	//	mqttraw = zerolog.NoLevel
+	//}
+	if strings.Contains(*logs, "miio") {
+		miioraw = zerolog.NoLevel
 	}
 
-	uart, silabs := initSerials()
-
-	if config.silabs {
-		patchSilabs()
-
-		go func() {
-			// TODO: restart silabs_ncp_bt
-			log.Infoln("Run: /tmp/silabs_ncp_bt /dev/ttyp8 1")
-			_ = exec.Command("/tmp/silabs_ncp_bt", "/dev/ttyp8", "1").Run()
-			// exit from silabs
-			log.Fatalln("silabs_ncp_bt exit")
-		}()
-		go func() {
-			time.Sleep(time.Second * 5)
-			log.Infoln("Run: daemon_miio.sh")
-			_ = exec.Command("daemon_miio.sh&").Start()
-		}()
+	if strings.Contains(*logs, "file") {
+		miioraw = zerolog.NoLevel
 	}
 
-	go silabs2uart(silabs, uart)
-	go uart2silabs(uart, silabs)
-
-	miioHandler := func(mac string, bindkey string) {
-		log.Debugln("Get bindkey for", mac)
-		config.AddDevice(mac, bindkey)
+	var writer io.Writer
+	if *logfile != "" {
+		writer, _ = os.Create(*logfile)
+	} else {
+		writer = os.Stderr
 	}
-	miioClient = miio.NewClient()
-	miioClient.Start(miioHandler)
+	writer = zerolog.ConsoleWriter{Out: writer, TimeFormat: "15:04:05.000"}
+	//writer := zerolog.MultiLevelWriter(writer, mqttLogWriter{})
+	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	log.Logger = log.Output(writer)
+}
+
+func mainInitConfig() {
+	data, err := ioutil.ReadFile("/data/gw3.json")
+	if err != nil {
+		return
+	}
+	if err = json.Unmarshal(data, config); err != nil {
+		log.Fatal().Err(err).Send()
+	}
+}
+
+type Config struct {
+	Devices map[string]ConfigDevice `json:"devices,omitempty"`
+}
+
+type ConfigDevice struct {
+	Bindkey string `json:"bindkey,omitempty"`
+}
+
+func (c *Config) GetBindkey(mac string) string {
+	for k, v := range c.Devices {
+		if k == mac {
+			return v.Bindkey
+		}
+	}
+	return ""
+}
+
+func (c *Config) SetBindKey(mac string, bindkey string) {
+	if c.Devices == nil {
+		c.Devices = make(map[string]ConfigDevice)
+	}
+	c.Devices[mac] = ConfigDevice{Bindkey: bindkey}
+
+	data, err := json.Marshal(c)
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+	log.Info().Str("mac", mac).Msg("Write new bindkey to config")
+
+	if err = ioutil.WriteFile("/data/gw3.json", data, 0666); err != nil {
+		log.Fatal().Err(err).Send()
+	}
+}
+
+type DeviceGetSet interface {
+	getState()
+	setState(p []byte)
 }

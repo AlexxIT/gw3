@@ -1,0 +1,5 @@
+quote pasv
+binary
+put gw3 /data/gw3
+disconnect
+quit
