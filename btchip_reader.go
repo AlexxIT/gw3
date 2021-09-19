@@ -42,9 +42,7 @@ func btchipReader() {
 	for {
 		n, err := reader.Read(p)
 		if err != nil {
-			// file closed in btchipInit function
-			log.Debug().Msg("close btchipReader")
-			return
+			continue
 		}
 
 		if n >= 4 {
