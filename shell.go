@@ -8,14 +8,16 @@ import (
 	"os/exec"
 )
 
-func silabsStop() {
-	log.Debug().Msg("Stop silabs_ncp_bt")
+func shellSilabsStop() {
+	log.Debug().Msg("Kill daemon_miio.sh and silabs_ncp_bt")
 	_ = exec.Command("killall", "daemon_miio.sh").Run()
 	_ = exec.Command("killall", "silabs_ncp_bt").Run()
 }
 
-func silabsStart() {
+func shellSilabsStart() {
 	if _, err := os.Stat("/tmp/daemon_miio.sh"); os.IsNotExist(err) {
+		log.Debug().Msg("Patch daemon_miio.sh")
+
 		var data []byte
 		// read original file
 		data, err = ioutil.ReadFile("/bin/daemon_miio.sh")
@@ -28,14 +30,28 @@ func silabsStart() {
 		}
 	}
 
-	log.Info().Msg("Run silabs_ncp_bt")
+	log.Info().Msg("Run daemon_miio.sh and silabs_ncp_bt")
 	// run patched script without error processing
 	_ = exec.Command("sh", "-c", "/tmp/daemon_miio.sh&").Start()
 }
 
+func shellFreeTTY() {
+	out, err := exec.Command("sh", "-c", "lsof | grep ptyp8 | cut -f 1").Output()
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+	if len(out) == 0 {
+		return
+	}
+	// remove leading n: "1234\n"
+	pid := string(out[:len(out)-1])
+	log.Debug().Str("pid", pid).Msg("Releasing the TTY")
+	_ = exec.Command("kill", pid).Run()
+}
+
 // Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
 // It's not a problem to lose this base, because the gateway will restore it from the cloud.
-func patchSilabs() {
+func shellPatchSilabs() {
 	if _, err := os.Stat("/tmp/silabs_ncp_bt"); !os.IsNotExist(err) {
 		return
 	}
