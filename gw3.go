@@ -5,7 +5,6 @@ import (
 	"flag"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"io"
 	"io/ioutil"
 	"os"
 	"strings"
@@ -49,7 +48,6 @@ var (
 
 func mainInitLogger() {
 	logs := flag.String("log", "", "sets log level to debug")
-	logfile := flag.String("logfile", "", "output log into file instead of stdout")
 
 	flag.Parse()
 
@@ -80,15 +78,9 @@ func mainInitLogger() {
 		miioraw = zerolog.NoLevel
 	}
 
-	var writer io.Writer
-	if *logfile != "" {
-		writer, _ = os.Create(*logfile)
-	} else {
-		writer = os.Stderr
-	}
-	writer = zerolog.ConsoleWriter{Out: writer, TimeFormat: "15:04:05.000"}
-	//writer := zerolog.MultiLevelWriter(writer, mqttLogWriter{})
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+	writer := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.000"}
+	//writer := zerolog.MultiLevelWriter(writer, mqttLogWriter{})
 	log.Logger = log.Output(writer)
 }
 
