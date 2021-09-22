@@ -19,8 +19,14 @@ func shellSilabsStart() {
 		log.Debug().Msg("Patch daemon_miio.sh")
 
 		var data []byte
-		// read original file
+		// read original file (firmware v1.4.7_0063+)
 		data, err = ioutil.ReadFile("/bin/daemon_miio.sh")
+		if err != nil {
+			data, err = ioutil.ReadFile("/usr/app/bin/daemon_miio.sh")
+			if err != nil {
+				log.Fatal().Err(err).Send()
+			}
+		}
 
 		data = bytes.Replace(data, []byte("ttyS1"), []byte("ttyp8"), 1)
 
@@ -43,7 +49,7 @@ func shellFreeTTY() {
 	if len(out) == 0 {
 		return
 	}
-	// remove leading n: "1234\n"
+	// remove leading new line: "1234\n"
 	pid := string(out[:len(out)-1])
 	log.Debug().Str("pid", pid).Msg("Releasing the TTY")
 	_ = exec.Command("kill", pid).Run()
