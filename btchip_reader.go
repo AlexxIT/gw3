@@ -35,6 +35,8 @@ func btchipReader() {
 	//var skipBuf = make([]byte, 256)
 	var skipN int
 
+	t := shellSilabsWatchdog()
+
 	// bglib reader will return full command/event or return only 1 byte for wrong response bytes
 	// fw v1.4.6_0012 returns 0x937162AD at start of each command/event
 	// fw v1.5.0_0026 returns 0xC0 at start and at end of each command/event
@@ -53,6 +55,9 @@ func btchipReader() {
 			skipN = 0
 
 			header, data := bglib.DecodeResponse(p, n)
+
+			// reset any useful data watchdog timer
+			t.Reset(time.Minute)
 
 			// process only logs
 			switch header {

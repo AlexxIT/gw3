@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
 )
 
 func shellSilabsStop() {
@@ -82,4 +83,17 @@ func shellPatchSilabs() {
 	// copy databases
 	_ = exec.Command("cp", "/data/miio/mible_local.db", "/data/miio/mible_local.db-shm",
 		"/data/miio/mible_local.db-wal", "/data/miio/sbt_record_db", "/var/tmp/").Run()
+}
+
+func shellSilabsWatchdog() *time.Timer {
+	t := time.NewTimer(time.Minute)
+	go func() {
+		for {
+			<-t.C
+			log.Warn().Msg("Restart silabs_ncp_bt after timeout")
+			_ = exec.Command("killall", "silabs_ncp_bt").Run()
+			t.Reset(time.Minute)
+		}
+	}()
+	return t
 }
