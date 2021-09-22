@@ -16,7 +16,7 @@ func shellSilabsStop() {
 
 func shellSilabsStart() {
 	if _, err := os.Stat("/tmp/daemon_miio.sh"); os.IsNotExist(err) {
-		log.Debug().Msg("Patch daemon_miio.sh")
+		log.Info().Msg("Patch daemon_miio.sh")
 
 		var data []byte
 		// read original file (firmware v1.4.7_0063+)
@@ -36,7 +36,7 @@ func shellSilabsStart() {
 		}
 	}
 
-	log.Info().Msg("Run daemon_miio.sh and silabs_ncp_bt")
+	log.Debug().Msg("Run daemon_miio.sh and silabs_ncp_bt")
 	// run patched script without error processing
 	_ = exec.Command("sh", "-c", "/tmp/daemon_miio.sh&").Start()
 }

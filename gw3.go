@@ -47,7 +47,7 @@ var (
 )
 
 func mainInitLogger() {
-	logs := flag.String("log", "", "sets log level to debug")
+	logs := flag.String("log", "", "values: trace,debug,info,btraw,btgap,miio")
 
 	flag.Parse()
 
@@ -71,10 +71,6 @@ func mainInitLogger() {
 	//	mqttraw = zerolog.NoLevel
 	//}
 	if strings.Contains(*logs, "miio") {
-		miioraw = zerolog.NoLevel
-	}
-
-	if strings.Contains(*logs, "file") {
 		miioraw = zerolog.NoLevel
 	}
 

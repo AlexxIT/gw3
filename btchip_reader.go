@@ -32,8 +32,8 @@ func btchipInit() {
 func btchipReader() {
 	var p = make([]byte, 260) // max payload size + 4
 
-	var skipBuf = make([]byte, 256)
-	var skipN uint8
+	//var skipBuf = make([]byte, 256)
+	var skipN int
 
 	// bglib reader will return full command/event or return only 1 byte for wrong response bytes
 	// fw v1.4.6_0012 returns 0x937162AD at start of each command/event
@@ -48,7 +48,7 @@ func btchipReader() {
 		if n >= 4 {
 			// don't care if skip len lower than 5 bytes
 			if skipN >= 5 {
-				log.Warn().Hex("data", skipBuf[:skipN]).Msg("Skip wrong bytes")
+				log.Warn().Int("len", skipN).Msg("Skip wrong bytes")
 			}
 			skipN = 0
 
@@ -73,10 +73,11 @@ func btchipReader() {
 			case bglib.Evt_system_boot:
 				if !bglib.IsResetCmd(btchipReq) {
 					// silabs_ncp_bt reboot chip at startup using GPIO
-					log.Debug().Msg("Hardware chip reboot detected")
+					log.Info().Msg("Hardware chip reboot detected")
 					// no need to forward event in this case
 					continue
 				}
+				log.Info().Msg("Software chip reboot detected")
 			case bglib.Evt_le_gap_extended_scan_response:
 				n = btchipProcessExtResponse(p[:n])
 			}
@@ -85,7 +86,7 @@ func btchipReader() {
 				btchipRespClear()
 			}
 		} else {
-			skipBuf[skipN] = p[0]
+			//skipBuf[skipN] = p[0]
 			skipN++
 		}
 
