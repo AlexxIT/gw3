@@ -17,6 +17,10 @@ func shellSilabsStop() {
 	_ = exec.Command("killall", "silabs_ncp_bt").Run()
 }
 
+func shellUpdatePath() {
+	_ = os.Setenv("PATH", "/tmp:"+os.Getenv("PATH"))
+}
+
 func shellDaemonStart() {
 	if _, err := os.Stat("/tmp/daemon_miio.sh"); os.IsNotExist(err) {
 		log.Info().Msg("Patch daemon_miio.sh")
@@ -41,7 +45,7 @@ func shellDaemonStart() {
 
 	log.Debug().Msg("Run daemon_miio.sh")
 	// run patched script without error processing
-	_ = exec.Command("sh", "-c", "/tmp/daemon_miio.sh&").Start()
+	_ = exec.Command("sh", "-c", "daemon_miio.sh&").Start()
 }
 
 func shellFreeTTY() {

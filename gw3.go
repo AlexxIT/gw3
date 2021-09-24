@@ -20,6 +20,7 @@ func main() {
 	mainInitLogger()
 	mainInitConfig()
 
+	shellUpdatePath()
 	shellDaemonStop()
 	shellSilabsStop()
 	shellFreeTTY()
