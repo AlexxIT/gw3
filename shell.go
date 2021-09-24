@@ -1,3 +1,17 @@
+/*
+/bin/mijia_automation  /data/mijia_automation/db.unqlite
+/bin/mijia_automation  /data/mijia_automation
+/bin/silabs_ncp_bt     /data/miio/mible_local.db
+/bin/silabs_ncp_bt     /data/miio/mible_local.db-wal
+/bin/silabs_ncp_bt     /data/miio/mible_local.db-shm
+/bin/silabs_ncp_bt     /data/ble_info
+/bin/miio_client       /data/miioconfig.db
+/bin/miio_client       /data/miioconfig.db_unqlite_journal
+/bin/basic_app         /data/basic_app/gw_devices.data
+/bin/zigbee_agent      /data/zigbee/coordinator.info
+/bin/zigbee_gw         /data/zigbee_gw
+/bin/zigbee_gw         /data/zigbee_gw/device_properties.json
+*/
 package main
 
 import (
