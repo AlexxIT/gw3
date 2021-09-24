@@ -45,18 +45,15 @@ func btchipReader() {
 	state := StateNone
 
 	// We wait a minute for the start of discovery mode. After that any data from the chip updates the timer.
-	t := time.NewTimer(time.Minute)
-	go func() {
-		for {
-			<-t.C
-			state = StateNone
+	var restartTimer *time.Timer
+	restartTimer = time.AfterFunc(time.Minute, func() {
+		state = StateNone
 
-			log.Info().Str("state", "restart").Msg("Bluetooth state")
-			shellSilabsStop()
+		log.Info().Str("state", "restart").Msg("Bluetooth state")
+		shellSilabsStop()
 
-			t.Reset(time.Minute)
-		}
-	}()
+		restartTimer.Reset(time.Minute)
+	})
 
 	// bglib reader will return full command/event or return only 1 byte for wrong response bytes
 	// fw v1.4.6_0012 returns 0x937162AD at start of each command/event
@@ -120,7 +117,7 @@ func btchipReader() {
 
 			if state == StateDiscovery {
 				// any message in discovery state update btapp watchdog timer
-				t.Reset(time.Minute)
+				restartTimer.Reset(time.Minute)
 			}
 		} else if n > 1 {
 			log.Warn().Hex("data", p[:n]).Msg("Skip wrong bytes")
