@@ -48,6 +48,20 @@ func (r *ChipReader) Read(p []byte) (int, error) {
 			return copy(p, chunk[:1]), WrongRead
 		}
 
+		// new firmware has a bug with DB/DC or DB/DD bytes in payload in place of only one byte
+		// we should jump over this byte
+		// a026030400______50ec5000ff0100ff7fdbdc26000014020106101695fe9055eb0601______50ec500e00
+		//                                   ^^^^
+		// a028030403______50ec5000ff0100ff7fb327000016152a6935020c0fefdbdd214e1e7768c729201c86fd36c7
+		//                                                             ^^^^
+		// a028030403______50ec5000ff0100ff7fbb27000016152a69760eef45d6d8e271866b11dbddcf03c8ee530d01
+		//                                                                         ^^^^
+		// a025030400______38c1a400ff0100ff7fd12700001312161a18______38c1a440086714060b45dbdc0f c0c0
+		//                                                                               ^^^^ last byte
+		if isGap && buf[n-1] == 0xDB && (chunk[0] == 0xDC || chunk[0] == 0xDD) {
+			continue
+		}
+
 		buf[n] = chunk[0]
 		n++
 
@@ -77,19 +91,6 @@ func (r *ChipReader) Read(p []byte) (int, error) {
 		case 260:
 			// this shouldn't happen
 			log.Panic().Hex("data", buf[:260]).Int("len", expectedLen).Send()
-
-		default:
-			// new firmware has a bug with DB/DC or DB/DD bytes in payload in place of only one byte
-			// we should jump over this byte
-			// a026030400______50ec5000ff0100ff7fdbdc26000014020106101695fe9055eb0601______50ec500e00
-			//                                   ^^^^
-			// a028030403______50ec5000ff0100ff7fb327000016152a6935020c0fefdbdd214e1e7768c729201c86fd36c7
-			//                                                             ^^^^
-			// a028030403______50ec5000ff0100ff7fbb27000016152a69760eef45d6d8e271866b11dbddcf03c8ee530d01
-			//                                                                         ^^^^
-			if isGap && buf[n-2] == 0xDB && (buf[n-1] == 0xDC || buf[n-1] == 0xDD) {
-				n--
-			}
 		}
 	}
 }
