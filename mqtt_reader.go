@@ -70,8 +70,6 @@ func mqttPublish(topic string, data interface{}, retain bool) {
 		}
 	}
 
-	//log.WithLevel(mqttraw).Str("topic", topic).Bytes("msg", payload).Msg("=>mqtt")
-
 	//var re = regexp.MustCompile(`([0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}):[0-9A-F]{2}:[0-9A-F]{2}:[0-9A-F]{2}`)
 	//topic = re.ReplaceAllString(topic, `$1:FF:FF:FF`)
 	//payload = re.ReplaceAll(payload, []byte(`$1:FF:FF:FF`))

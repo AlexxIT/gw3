@@ -41,9 +41,8 @@ func main() {
 
 var (
 	// additional log levels for advanced output
-	btraw = zerolog.Disabled
-	btgap = zerolog.Disabled
-	//mqttraw = zerolog.Disabled
+	btraw   = zerolog.Disabled
+	btgap   = zerolog.Disabled
 	miioraw = zerolog.Disabled
 )
 
@@ -68,17 +67,17 @@ func mainInitLogger() {
 	if strings.Contains(*logs, "btgap") {
 		btgap = zerolog.NoLevel
 	}
-	//if strings.Contains(*logs, "mqtt") {
-	//	mqttraw = zerolog.NoLevel
-	//}
 	if strings.Contains(*logs, "miio") {
 		miioraw = zerolog.NoLevel
 	}
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 	writer := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.000"}
-	//writer := zerolog.MultiLevelWriter(writer, mqttLogWriter{})
-	log.Logger = log.Output(writer)
+	if strings.Contains(*logs, "mqtt") {
+		log.Logger = log.Output(zerolog.MultiLevelWriter(writer, mqttLogWriter{}))
+	} else {
+		log.Logger = log.Output(writer)
+	}
 }
 
 func mainInitConfig() {
