@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/AlexxIT/gw3/bglib"
 	"github.com/AlexxIT/gw3/serial"
+	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 	"io"
 	"time"
@@ -26,11 +27,17 @@ func btappInit() {
 }
 
 func btappReader() {
+	// only one msg per 10 seconds
+	sampler := log.Sample(&zerolog.BurstSampler{
+		Burst:  1,
+		Period: 10 * time.Second,
+	})
+
 	var p = make([]byte, 1024)
 	for {
 		n, err := btapp.Read(p)
 		if err != nil {
-			time.Sleep(time.Second)
+			sampler.Debug().Err(err).Msg("btapp.Read")
 			continue
 		}
 
