@@ -28,14 +28,35 @@ func btchipInit() {
 	}
 }
 
+const (
+	StateNone = iota
+	StateReset
+	StateSetup
+	StateDiscovery
+)
+
 // btchipReader loops reading data from BT chip
 func btchipReader() {
 	var p = make([]byte, 260) // max payload size + 4
 
-	//var skipBuf = make([]byte, 256)
+	var skipBuf = make([]byte, 256)
 	var skipN int
 
-	t := shellSilabsWatchdog()
+	state := StateNone
+
+	// We wait a minute for the start of discovery mode. After that any data from the chip updates the timer.
+	t := time.NewTimer(time.Minute)
+	go func() {
+		for {
+			<-t.C
+			state = StateNone
+
+			log.Warn().Msg("Restart silabs_ncp_bt after timeout")
+			shellSilabsStop()
+
+			t.Reset(time.Minute)
+		}
+	}()
 
 	// bglib reader will return full command/event or return only 1 byte for wrong response bytes
 	// fw v1.4.6_0012 returns 0x937162AD at start of each command/event
@@ -43,21 +64,19 @@ func btchipReader() {
 	reader := bglib.NewReader(btchip)
 	for {
 		n, err := reader.Read(p)
-		if err != nil {
+		if n == 0 {
+			log.Debug().Err(err).Msg("btchip.Read")
 			continue
 		}
 
-		if n >= 4 {
+		if err == nil {
 			// don't care if skip len lower than 5 bytes
-			if skipN >= 5 {
-				log.Warn().Int("len", skipN).Msg("Skip wrong bytes")
+			if skipN > 2 {
+				log.Warn().Hex("data", skipBuf[:skipN]).Msg("Skip wrong bytes")
 			}
 			skipN = 0
 
 			header, data := bglib.DecodeResponse(p, n)
-
-			// reset any useful data watchdog timer
-			t.Reset(time.Minute)
 
 			// process only logs
 			switch header {
@@ -70,19 +89,24 @@ func btchipReader() {
 			// process data
 			switch header {
 			case bglib.Cmd_system_get_bt_address:
+				state = StateSetup
 				gw = newGatewayDevice(data["mac"].(string))
 			case bglib.Cmd_le_gap_set_discovery_extended_scan_response:
-				log.Debug().Msg("cmd_le_gap_set_discovery_extended_scan_response")
+				log.Debug().Msg("<=cmd_le_gap_set_discovery_extended_scan_response")
 				// no need to forward response to this command
 				n = 0
+			case bglib.Cmd_le_gap_start_discovery:
+				state = StateDiscovery
+				log.Info().Msg("<=cmd_le_gap_start_discovery")
 			case bglib.Evt_system_boot:
+				state = StateReset
 				if !bglib.IsResetCmd(btchipReq) {
 					// silabs_ncp_bt reboot chip at startup using GPIO
-					log.Info().Msg("Hardware chip reboot detected")
+					log.Info().Int("queue", len(btchipQueue)).Msg("Hardware chip reboot detected")
 					// no need to forward event in this case
 					continue
 				}
-				log.Info().Msg("Software chip reboot detected")
+				log.Info().Int("queue", len(btchipQueue)).Msg("Software chip reboot detected")
 			case bglib.Evt_le_gap_extended_scan_response:
 				n = btchipProcessExtResponse(p[:n])
 			}
@@ -90,8 +114,15 @@ func btchipReader() {
 			if p[0] == 0x20 || header == bglib.Evt_system_boot {
 				btchipRespClear()
 			}
-		} else {
-			//skipBuf[skipN] = p[0]
+
+			if state == StateDiscovery {
+				// any message in discovery state update btapp watchdog timer
+				t.Reset(time.Minute)
+			}
+		} else if n > 1 {
+			log.Warn().Hex("data", p[:n]).Msg("Skip wrong bytes")
+		} else if skipN < 256 {
+			skipBuf[skipN] = p[0]
 			skipN++
 		}
 
@@ -124,6 +155,8 @@ func btchipQueueClear() {
 
 // unblock btchipResp chan even if no waiters
 func btchipRespClear() {
+	btchipReq = nil
+
 	select {
 	case btchipResp <- true:
 	default:
@@ -134,7 +167,7 @@ var btchipReq []byte
 
 func btchipWriter() {
 	for btchipReq = range btchipQueue {
-		log.WithLevel(btraw).Hex("data", btchipReq).Msg("=>btraw")
+		log.WithLevel(btraw).Hex("data", btchipReq).Int("queue", len(btchipQueue)).Msg("=>btraw")
 
 		if _, err := btchip.Write(btchipReq); err != nil {
 			log.Fatal().Err(err).Send()

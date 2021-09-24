@@ -9,6 +9,8 @@ import (
 	"io"
 )
 
+var WrongRead = errors.New("")
+
 const Cmd_system_reset = 0x2000_0101
 const Cmd_system_get_bt_address = 0x2000_0103
 const Cmd_le_gap_set_discovery_timing = 0x2000_0316
@@ -34,7 +36,7 @@ func (r *ChipReader) Read(p []byte) (int, error) {
 	chunk := make([]byte, 1)
 	expectedLen := 0
 
-	waitDB := true
+	isGap := false
 
 	for {
 		if _, err := r.r.Read(chunk); err != nil {
@@ -43,20 +45,7 @@ func (r *ChipReader) Read(p []byte) (int, error) {
 
 		// type byte = 0xA0 or 0x20
 		if n == 0 && (chunk[0]&0x7F != 0x20) {
-			return copy(p, chunk[:1]), nil
-		}
-
-		// new firmware has a bug with DB/DC or DB/DD bytes in payload in place of only one byte
-		if waitDB {
-			if n > 4 && buf[2] == 0x03 && buf[3] == 0x04 && chunk[0] == 0xDB {
-				waitDB = false
-			}
-		} else {
-			waitDB = true
-			if chunk[0] == 0xDC || chunk[0] == 0xDD {
-				//log.Traceln("! Skip DB/DC/DD", n, hex.EncodeToString(buf[:4]))
-				continue
-			}
+			return copy(p, chunk[:1]), WrongRead
 		}
 
 		buf[n] = chunk[0]
@@ -66,19 +55,41 @@ func (r *ChipReader) Read(p []byte) (int, error) {
 		case 2:
 			// length should be greater than 0
 			if buf[1] == 0 {
-				return copy(p, buf[:2]), nil
+				return copy(p, buf[:2]), WrongRead
 			}
 			// cmdType + payloadLen + classID + commandID + payload
 			expectedLen = 4 + int(buf[1])
+
+		case expectedLen:
+			return copy(p, buf[:expectedLen]), nil
+
+		case 5:
+			// default: will check byte 5 and byte 6
+			isGap = buf[0] == 0xA0 && buf[2] == 0x03 && buf[3] == 0x04
+
 		case 16:
 			// sometimes data has a bug for evt_le_gap_extended_scan_response
 			// buf[15] = 0xC0 (new message) but always should be 0xFF
 			if buf[0] == 0xA0 && buf[2] == 0x03 && buf[3] == 0x04 && buf[15] != 0xFF {
-				return copy(p, buf[:16]), nil
+				return copy(p, buf[:16]), WrongRead
 			}
 
-		case expectedLen:
-			return copy(p, buf[:expectedLen]), nil
+		case 260:
+			// this shouldn't happen
+			log.Panic().Hex("data", buf[:260]).Int("len", expectedLen).Send()
+
+		default:
+			// new firmware has a bug with DB/DC or DB/DD bytes in payload in place of only one byte
+			// we should jump over this byte
+			// a026030400______50ec5000ff0100ff7fdbdc26000014020106101695fe9055eb0601______50ec500e00
+			//                                   ^^^^
+			// a028030403______50ec5000ff0100ff7fb327000016152a6935020c0fefdbdd214e1e7768c729201c86fd36c7
+			//                                                             ^^^^
+			// a028030403______50ec5000ff0100ff7fbb27000016152a69760eef45d6d8e271866b11dbddcf03c8ee530d01
+			//                                                                         ^^^^
+			if isGap && buf[n-2] == 0xDB && (buf[n-1] == 0xDC || buf[n-1] == 0xDD) {
+				n--
+			}
 		}
 	}
 }
@@ -101,6 +112,10 @@ func DecodeResponse(p []byte, n int) (uint32, Map) {
 		if n == 6 && p[1] == 0x02 {
 			return header, nil
 		}
+	case Cmd_le_gap_start_discovery:
+		if n == 6 && p[1] == 0x02 {
+			return header, nil
+		}
 	case Evt_system_boot:
 		if n == 22 && p[1] == 0x12 {
 			return header, nil
@@ -108,8 +123,6 @@ func DecodeResponse(p []byte, n int) (uint32, Map) {
 	case Evt_le_gap_extended_scan_response:
 		if n >= 22 && p[1] >= 0x12 && p[21] == byte(n)-22 {
 			return header, nil
-		} else if n == 16 && p[15] == 0xC0 {
-			log.Debug().Hex("data", p[:n]).Msg("! Fast fix after")
 		} else {
 			log.Debug().Hex("data", p[:n]).Msg("! Wrong scan response len")
 		}
