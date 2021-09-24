@@ -13,7 +13,7 @@ import (
 var (
 	config  = &Config{}
 	devices = make(map[string]interface{})
-	gw      *GatewayDevice
+	gw      = newGatewayDevice()
 )
 
 func main() {
@@ -41,8 +41,8 @@ func main() {
 
 var (
 	// additional log levels for advanced output
-	btraw   = zerolog.Disabled
-	btgap   = zerolog.Disabled
+	btraw = zerolog.Disabled
+	btgap = zerolog.Disabled
 	//mqttraw = zerolog.Disabled
 	miioraw = zerolog.Disabled
 )

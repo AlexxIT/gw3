@@ -76,7 +76,7 @@ func btchipReader() {
 			}
 			skipN = 0
 
-			header, data := bglib.DecodeResponse(p, n)
+			header, _ := bglib.DecodeResponse(p, n)
 
 			// process only logs
 			switch header {
@@ -90,7 +90,6 @@ func btchipReader() {
 			switch header {
 			case bglib.Cmd_system_get_bt_address:
 				state = StateSetup
-				gw = newGatewayDevice(data["mac"].(string))
 			case bglib.Cmd_le_gap_set_discovery_extended_scan_response:
 				log.Debug().Msg("<=cmd_le_gap_set_discovery_extended_scan_response")
 				// no need to forward response to this command

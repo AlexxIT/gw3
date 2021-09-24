@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 func shellDaemonStop() {
@@ -55,6 +56,30 @@ func shellFreeTTY() {
 	pid := string(out[:len(out)-1])
 	log.Debug().Str("pid", pid).Msg("Releasing the TTY")
 	_ = exec.Command("kill", pid).Run()
+}
+
+func shellDeviceInfo() (did string, mac string) {
+	// did=123456789
+	// key=xxxxxxxxxxxxxxxx
+	// mac=54:EF:44:FF:FF:FF
+	// vendor=lumi
+	// model=lumi.gateway.mgl03
+	data, err := ioutil.ReadFile("/data/miio/device.conf")
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+	for _, line := range strings.Split(string(data), "\n") {
+		if len(line) < 5 {
+			continue
+		}
+		switch line[:3] {
+		case "did":
+			did = line[4:]
+		case "mac":
+			mac = line[4:]
+		}
+	}
+	return
 }
 
 // Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
