@@ -114,7 +114,7 @@ func btchipQueueAdd(p []byte) {
 }
 
 func btchipQueueClear() {
-	if len(btchipQueue) > 0 {
+	for len(btchipQueue) > 0 {
 		select {
 		case <-btchipQueue:
 		default:
