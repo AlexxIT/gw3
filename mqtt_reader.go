@@ -24,6 +24,7 @@ func mqttReader() {
 			if err = mqttClient.Connect("", ""); err != nil {
 				log.Error().Err(err).Send()
 			} else {
+				gw.updateInfo()
 				mqttClient.Subscribe([]proto.TopicQos{
 					{Topic: "gw3/+/set"},
 				})

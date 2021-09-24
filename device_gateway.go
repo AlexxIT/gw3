@@ -28,6 +28,10 @@ func newGatewayDevice() *GatewayDevice {
 	return device
 }
 
+func (d *GatewayDevice) updateInfo() {
+	mqttPublish("gw3/"+d.WiFi.MAC+"/info", d, true)
+}
+
 func (d *GatewayDevice) updateBT(fw string, addr uint16, ivi uint32) {
 	d.BT.FwVersion = fw
 	d.BT.Addr = addr
