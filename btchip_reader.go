@@ -51,7 +51,7 @@ func btchipReader() {
 			<-t.C
 			state = StateNone
 
-			log.Warn().Msg("Restart silabs_ncp_bt after timeout")
+			log.Info().Str("state", "restart").Msg("Bluetooth state")
 			shellSilabsStop()
 
 			t.Reset(time.Minute)
@@ -89,23 +89,27 @@ func btchipReader() {
 			// process data
 			switch header {
 			case bglib.Cmd_system_get_bt_address:
-				state = StateSetup
+				// btapp sends command two times
+				if state != StateSetup {
+					state = StateSetup
+					log.Info().Str("state", "setup").Msg("Bluetooth state")
+				}
 			case bglib.Cmd_le_gap_set_discovery_extended_scan_response:
 				log.Debug().Msg("<=cmd_le_gap_set_discovery_extended_scan_response")
 				// no need to forward response to this command
 				n = 0
 			case bglib.Cmd_le_gap_start_discovery:
 				state = StateDiscovery
-				log.Info().Msg("<=cmd_le_gap_start_discovery")
+				log.Info().Str("state", "discovery").Msg("Bluetooth state")
 			case bglib.Evt_system_boot:
 				state = StateReset
 				if !bglib.IsResetCmd(btchipReq) {
 					// silabs_ncp_bt reboot chip at startup using GPIO
-					log.Info().Int("queue", len(btchipQueue)).Msg("Hardware chip reboot detected")
+					log.Info().Str("state", "reset").Str("type", "hardware").Msg("Bluetooth state")
 					// no need to forward event in this case
 					continue
 				}
-				log.Info().Int("queue", len(btchipQueue)).Msg("Software chip reboot detected")
+				log.Info().Str("state", "reset").Str("type", "software").Msg("Bluetooth state")
 			case bglib.Evt_le_gap_extended_scan_response:
 				n = btchipProcessExtResponse(p[:n])
 			}
@@ -166,7 +170,7 @@ var btchipReq []byte
 
 func btchipWriter() {
 	for btchipReq = range btchipQueue {
-		log.WithLevel(btraw).Hex("data", btchipReq).Int("queue", len(btchipQueue)).Msg("=>btraw")
+		log.WithLevel(btraw).Hex("data", btchipReq).Msg("=>btraw")
 
 		if _, err := btchip.Write(btchipReq); err != nil {
 			log.Fatal().Err(err).Send()

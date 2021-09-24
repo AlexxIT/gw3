@@ -46,7 +46,7 @@ func btappReader() {
 		header := uint32(p[0])<<24 | uint32(p[2])<<8 | uint32(p[3])
 		switch header {
 		case bglib.Cmd_system_reset:
-			log.Info().Msg("=>cmd_system_reset")
+			log.Debug().Msg("=>cmd_system_reset")
 
 			btchipQueueClear()
 			btchipRespClear()
