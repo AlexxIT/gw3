@@ -20,13 +20,14 @@ func main() {
 	mainInitLogger()
 	mainInitConfig()
 
+	shellDaemonStop()
 	shellSilabsStop()
 	shellFreeTTY()
 
 	btappInit()
 	btchipInit()
 
-	shellSilabsStart()
+	shellDaemonStart()
 
 	go btchipReader()
 	go btchipWriter()

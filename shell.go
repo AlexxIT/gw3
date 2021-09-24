@@ -9,13 +9,15 @@ import (
 	"time"
 )
 
-func shellSilabsStop() {
-	log.Debug().Msg("Kill daemon_miio.sh and silabs_ncp_bt")
+func shellDaemonStop() {
 	_ = exec.Command("killall", "daemon_miio.sh").Run()
+}
+
+func shellSilabsStop() {
 	_ = exec.Command("killall", "silabs_ncp_bt").Run()
 }
 
-func shellSilabsStart() {
+func shellDaemonStart() {
 	if _, err := os.Stat("/tmp/daemon_miio.sh"); os.IsNotExist(err) {
 		log.Info().Msg("Patch daemon_miio.sh")
 
@@ -37,7 +39,7 @@ func shellSilabsStart() {
 		}
 	}
 
-	log.Debug().Msg("Run daemon_miio.sh and silabs_ncp_bt")
+	log.Debug().Msg("Run daemon_miio.sh")
 	// run patched script without error processing
 	_ = exec.Command("sh", "-c", "/tmp/daemon_miio.sh&").Start()
 }
