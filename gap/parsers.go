@@ -33,6 +33,10 @@ func ParseATC1441(b []byte) Map {
 // ParseMiScalesV1
 // https://github.com/G1K/EspruinoHub/blob/3f3946206b81ea700493621f61c6d6e380b4ff0d/lib/attributes.js#L104
 func ParseMiScalesV1(b []byte) Map {
+	if len(b) < 3 {
+		return nil
+	}
+
 	result := Map{
 		"stabilized": b[0]&0b100000 > 0,
 		"removed":    b[0]&0b10000000 > 0,
@@ -55,6 +59,10 @@ func ParseMiScalesV1(b []byte) Map {
 // ParseMiScalesV2
 // https://github.com/G1K/EspruinoHub/blob/3f3946206b81ea700493621f61c6d6e380b4ff0d/lib/attributes.js#L78
 func ParseMiScalesV2(b []byte) Map {
+	if len(b) < 12 {
+		return nil
+	}
+
 	result := Map{
 		"stabilized": b[1]&0b100000 > 0,
 		"removed":    b[1]&0b10000000 > 0,
@@ -79,6 +87,17 @@ func ParseMiScalesV2(b []byte) Map {
 }
 
 func ParseIBeacon(b []byte) Map {
+	// https://support.kontakt.io/hc/en-gb/articles/201492492-iBeacon-advertising-packet-structure
+	// 0      0x02
+	// 1      0x15
+	// 2..17  UUID (16 bytes)
+	// 18 19  Major
+	// 20 21  Minor
+	// 22     Power
+	if len(b) != 23 || b[0] != 0x02 || b[1] != 0x15 {
+		return nil
+	}
+
 	return Map{
 		"uuid":  hex.EncodeToString(b[2:18]),
 		"major": binary.BigEndian.Uint16(b[18:]),

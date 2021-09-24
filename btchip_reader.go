@@ -174,16 +174,19 @@ func btchipProcessExtResponse(data []byte) int {
 
 	switch msg.ServiceUUID {
 	case 0x181A:
-		payload = gap.ParseATC1441(msg.Raw[0x16][2:])
-		btchipProcessBLE(msg.MAC, "atc1441", payload, true)
+		if payload = gap.ParseATC1441(msg.Raw[0x16][2:]); payload != nil {
+			btchipProcessBLE(msg.MAC, "atc1441", payload, true)
+		}
 
 	case 0x181B:
-		payload = gap.ParseMiScalesV2(msg.Raw[0x16][2:])
-		btchipProcessBLE(msg.MAC, "miscales2", payload, false)
+		if payload = gap.ParseMiScalesV2(msg.Raw[0x16][2:]); payload != nil {
+			btchipProcessBLE(msg.MAC, "miscales2", payload, false)
+		}
 
 	case 0x181D:
-		payload = gap.ParseMiScalesV1(msg.Raw[0x16][2:])
-		btchipProcessBLE(msg.MAC, "miscales", payload, false)
+		if payload = gap.ParseMiScalesV1(msg.Raw[0x16][2:]); payload != nil {
+			btchipProcessBLE(msg.MAC, "miscales", payload, false)
+		}
 
 	case 0xFE95:
 		mibeacon, useful := gap.ParseMiBeacon(msg.Raw[0x16][2:], config.GetBindkey)
@@ -200,8 +203,7 @@ func btchipProcessExtResponse(data []byte) int {
 
 	switch msg.CompanyID {
 	case 0x004C: // iBeacon
-		if msg.Raw[0xFF][2] == 2 && msg.Raw[0xFF][3] == 0x15 {
-			payload = gap.ParseIBeacon(msg.Raw[0xFF][2:])
+		if payload = gap.ParseIBeacon(msg.Raw[0xFF][2:]); payload != nil {
 			id := fmt.Sprintf("%s-%d-%d", payload["uuid"], payload["major"], payload["minor"])
 			btchipProcessBLETracker(id, "ibeacon", msg.RSSI)
 		}

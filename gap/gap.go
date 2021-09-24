@@ -65,6 +65,10 @@ func ParseScanResponse(data []byte) *Message {
 
 	var i int
 	for i < len(data) {
+		// 1 byte | len
+		// 1 byte | advType
+		// 2 byte | serviceID (advType=0x16) or company ID (advType=0xFF)
+		// X byte | other data (len-3 bytes)
 		l := int(data[i])
 		if l < 2 || i+l >= len(data) {
 			msg.Comment = "wrong len"
