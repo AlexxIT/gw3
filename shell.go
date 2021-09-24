@@ -103,14 +103,11 @@ func shellPatchSilabs() {
 	}
 
 	// same length before and after
-	data = bytes.Replace(data, []byte("/data/miio/mible_local.db"), []byte("/var/tmp/mible_local.db\x00\x00"), 1)
-	data = bytes.Replace(data, []byte("/data/miio/sbt_record_db"), []byte("/var/tmp/sbt_record_db\x00\x00"), 1)
-
-	if err = ioutil.WriteFile("/var/tmp/silabs_ncp_bt", data, 0x777); err != nil {
+	data = bytes.Replace(data, []byte("/data/"), []byte("/tmp//"), -1)
+	if err = ioutil.WriteFile("/tmp/silabs_ncp_bt", data, 0x777); err != nil {
 		log.Fatal().Err(err).Send()
 	}
 
 	// copy databases
-	_ = exec.Command("cp", "/data/miio/mible_local.db", "/data/miio/mible_local.db-shm",
-		"/data/miio/mible_local.db-wal", "/data/miio/sbt_record_db", "/var/tmp/").Run()
+	_ = exec.Command("cp", "-R", "/data/miio", "/tmp").Run()
 }
