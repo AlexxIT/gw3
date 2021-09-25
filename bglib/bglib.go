@@ -74,17 +74,27 @@ func (r *ChipReader) Read(p []byte) (int, error) {
 			// cmdType + payloadLen + classID + commandID + payload
 			expectedLen = 4 + int(buf[1])
 
-		case expectedLen:
-			return copy(p, buf[:expectedLen]), nil
-
-		case 5:
-			// default: will check byte 5 and byte 6
+		case 4:
+			// evt_le_gap_extended_scan_response (most frequent event)
 			isGap = buf[0] == 0xA0 && buf[2] == 0x03 && buf[3] == 0x04
+
+			// minimum length byte = 4 + 0x12
+			if isGap && expectedLen < 22 {
+				return copy(p, buf[:4]), WrongRead
+			}
+
+		case expectedLen:
+			// byte 21 = size of advertising data
+			if isGap && buf[21] != byte(n)-22 {
+				return copy(p, buf[:expectedLen]), WrongRead
+			}
+
+			return copy(p, buf[:expectedLen]), nil
 
 		case 16:
 			// sometimes data has a bug for evt_le_gap_extended_scan_response
-			// buf[15] = 0xC0 (new message) but always should be 0xFF
-			if buf[0] == 0xA0 && buf[2] == 0x03 && buf[3] == 0x04 && buf[15] != 0xFF {
+			// byte 15 = adv_sid always should be 0xFF (don't know why)
+			if isGap && buf[15] != 0xFF {
 				return copy(p, buf[:16]), WrongRead
 			}
 
@@ -106,8 +116,7 @@ func DecodeResponse(p []byte, n int) (uint32, Map) {
 	switch header {
 	case Cmd_system_get_bt_address:
 		if n == 10 && p[1] == 0x06 {
-			mac := fmt.Sprintf("%02X:%02X:%02X:%02X:%02X:%02X", p[9], p[8], p[7], p[6], p[5], p[4])
-			return header, Map{"mac": mac}
+			return header, nil
 		}
 	case Cmd_le_gap_set_discovery_extended_scan_response:
 		if n == 6 && p[1] == 0x02 {
@@ -124,8 +133,6 @@ func DecodeResponse(p []byte, n int) (uint32, Map) {
 	case Evt_le_gap_extended_scan_response:
 		if n >= 22 && p[1] >= 0x12 && p[21] == byte(n)-22 {
 			return header, nil
-		} else {
-			log.Debug().Hex("data", p[:n]).Msg("! Wrong scan response len")
 		}
 	}
 	return 0, nil
