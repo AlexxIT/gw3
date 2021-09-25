@@ -5,7 +5,9 @@ import (
 	"flag"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"io"
 	"io/ioutil"
+	"log/syslog"
 	"os"
 	"strings"
 	"time"
@@ -49,15 +51,21 @@ var (
 )
 
 func mainInitLogger() {
-	logs := flag.String("log", "warn", "Logs modes: trace,debug,info,btraw,btgap,miio,mqtt")
+	// log levels: debug, info, warn (default)
+	// advanced debug:
+	//   - btraw - all BT raw data except GAP
+	//   - btgap - only BT GAP raw data
+	//   - miio - miio raw data
+	// log out: syslog, mqtt, stdout (default)
+	// log format: json, text (nocolor), console (default)
+	logs := flag.String("log", "warn+stdout+console",
+		"Logs modes: debug,info + btraw,btgap,miio + syslog,mqtt + json,text")
 	flag.DurationVar(&config.discoveryDelay, "dd", time.Minute, "BLE discovery delay")
 	flag.DurationVar(&config.patchDelay, "pd", 5*time.Minute, "Silabs patch delay, 0 - disabled")
 
 	flag.Parse()
 
-	if strings.Contains(*logs, "trace") {
-		zerolog.SetGlobalLevel(zerolog.TraceLevel)
-	} else if strings.Contains(*logs, "debug") {
+	if strings.Contains(*logs, "debug") {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	} else if strings.Contains(*logs, "info") {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
@@ -76,12 +84,24 @@ func mainInitLogger() {
 	}
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
-	writer := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "15:04:05.000"}
-	if strings.Contains(*logs, "mqtt") {
-		log.Logger = log.Output(zerolog.MultiLevelWriter(writer, mqttLogWriter{}))
+
+	var writer io.Writer
+	if strings.Contains(*logs, "syslog") {
+		var err error
+		writer, err = syslog.New(syslog.LOG_USER|syslog.LOG_NOTICE, "gw3")
+		if err != nil {
+			log.Fatal().Err(err).Send()
+		}
+	} else if strings.Contains(*logs, "mqtt") {
+		writer = mqttLogWriter{}
 	} else {
-		log.Logger = log.Output(writer)
+		writer = os.Stdout
 	}
+	if !strings.Contains(*logs, "json") {
+		nocolor := writer != os.Stdout || strings.Contains(*logs, "text")
+		writer = zerolog.ConsoleWriter{Out: writer, TimeFormat: "15:04:05.000", NoColor: nocolor}
+	}
+	log.Logger = log.Output(writer)
 }
 
 func mainInitConfig() {
