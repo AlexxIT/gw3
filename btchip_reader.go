@@ -228,6 +228,9 @@ func btchipProcessExtResponse(data []byte) int {
 		//log.Debug().Uint8("useful", useful).Msgf("%+v", mibeacon)
 		if useful > 0 {
 			if useful == 1 {
+				if mibeacon.Comment == "wrong enc key" {
+					log.Warn().Hex("data", data[:n]).Msg("Wrong MiBeacon key")
+				}
 				// is encrypted
 				miioBleQueryDev(mibeacon.Mac, mibeacon.Pdid)
 			}
