@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"time"
 )
 
 func shellDaemonStop() {
@@ -100,13 +101,41 @@ func shellDeviceInfo() (did string, mac string) {
 	return
 }
 
-// Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
-// It's not a problem to lose this base, because the gateway will restore it from the cloud.
-func shellPatchSilabs() {
+var shellPatchTimer *time.Timer
+
+func shellPatchTimerStart() {
+	if config.patchDelay == 0 {
+		return
+	}
 	if _, err := os.Stat("/tmp/silabs_ncp_bt"); !os.IsNotExist(err) {
 		return
 	}
+	if shellPatchTimer == nil {
+		log.Debug().Msg("Start patch timer")
+		shellPatchTimer = time.AfterFunc(config.patchDelay, func() {
+			shellPatchSilabs()
+			// we need to restart daemon because new binary in tmp path
+			shellDaemonStop()
+			shellSilabsStop()
+			shellDaemonStart()
+			shellPatchTimer = nil
+		})
+	} else {
+		log.Debug().Msg("Reset patch timer")
+		shellPatchTimer.Reset(config.patchDelay)
+	}
+}
 
+func shellPatchTimerStop() {
+	if shellPatchTimer != nil {
+		log.Debug().Msg("Stop patch timer")
+		shellPatchTimer.Stop()
+	}
+}
+
+// Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
+// It's not a problem to lose this base, because the gateway will restore it from the cloud.
+func shellPatchSilabs() {
 	log.Info().Msg("Patch silabs_ncp_bt")
 
 	data, err := ioutil.ReadFile("/bin/silabs_ncp_bt")
@@ -123,5 +152,5 @@ func shellPatchSilabs() {
 	}
 
 	// copy databases
-	_ = exec.Command("cp", "-R", "/data/miio", "/tmp").Run()
+	_ = exec.Command("cp", "-R", "/data/miio", "/data/ble_info", "/tmp/").Run()
 }

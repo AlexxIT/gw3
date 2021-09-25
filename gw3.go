@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -48,7 +49,9 @@ var (
 )
 
 func mainInitLogger() {
-	logs := flag.String("log", "", "values: trace,debug,info,btraw,btgap,miio")
+	logs := flag.String("log", "warn", "Logs modes: trace,debug,info,btraw,btgap,miio,mqtt")
+	flag.DurationVar(&config.discoveryDelay, "dd", time.Minute, "BLE discovery delay")
+	flag.DurationVar(&config.patchDelay, "pd", 5*time.Minute, "Silabs patch delay, 0 - disabled")
 
 	flag.Parse()
 
@@ -92,7 +95,9 @@ func mainInitConfig() {
 }
 
 type Config struct {
-	Devices map[string]ConfigDevice `json:"devices,omitempty"`
+	Devices        map[string]ConfigDevice `json:"devices,omitempty"`
+	discoveryDelay time.Duration
+	patchDelay     time.Duration
 }
 
 type ConfigDevice struct {

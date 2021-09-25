@@ -45,14 +45,14 @@ func btchipReader() {
 	state := StateNone
 
 	// We wait a minute for the start of discovery mode. After that any data from the chip updates the timer.
-	var restartTimer *time.Timer
-	restartTimer = time.AfterFunc(time.Minute, func() {
+	var discoveryTimer *time.Timer
+	discoveryTimer = time.AfterFunc(time.Minute, func() {
 		state = StateNone
 
 		log.Info().Str("state", "restart").Msg("Bluetooth state")
 		shellSilabsStop()
 
-		restartTimer.Reset(time.Minute)
+		discoveryTimer.Reset(config.discoveryDelay)
 	})
 
 	// bglib reader will return full command/event or return only 1 byte for wrong response bytes
@@ -96,17 +96,19 @@ func btchipReader() {
 				// no need to forward response to this command
 				n = 0
 			case bglib.Cmd_le_gap_start_discovery:
+				shellPatchTimerStart()
 				state = StateDiscovery
 				log.Info().Str("state", "discovery").Msg("Bluetooth state")
 			case bglib.Evt_system_boot:
+				shellPatchTimerStop()
 				state = StateReset
 				if !bglib.IsResetCmd(btchipReq) {
 					// silabs_ncp_bt reboot chip at startup using GPIO
-					log.Info().Str("state", "reset").Str("type", "hardware").Msg("Bluetooth state")
+					log.Info().Str("state", "hardreset").Msg("Bluetooth state")
 					// no need to forward event in this case
 					continue
 				}
-				log.Info().Str("state", "reset").Str("type", "software").Msg("Bluetooth state")
+				log.Info().Str("state", "softreset").Msg("Bluetooth state")
 			case bglib.Evt_le_gap_extended_scan_response:
 				n = btchipProcessExtResponse(p[:n])
 			}
@@ -117,7 +119,7 @@ func btchipReader() {
 
 			if state == StateDiscovery {
 				// any message in discovery state update btapp watchdog timer
-				restartTimer.Reset(time.Minute)
+				discoveryTimer.Reset(config.discoveryDelay)
 			}
 		} else if n > 1 {
 			log.Warn().Hex("data", p[:n]).Msg("Skip wrong bytes")
