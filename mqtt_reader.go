@@ -88,7 +88,7 @@ func (m mqttLogWriter) Write(p []byte) (n int, err error) {
 	if mqttClient != nil {
 		msg := &proto.Publish{
 			Header:    proto.Header{},
-			TopicName: "gw3/log",
+			TopicName: "gw3/stdout",
 			Payload:   proto.BytesPayload(p),
 		}
 		mqttClient.Publish(msg)
