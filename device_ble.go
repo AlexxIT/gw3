@@ -80,15 +80,20 @@ func newBLEDevice(mac string, advType string) *BLEDevice {
 	return device
 }
 
-func (d *BLEDevice) updateState(data gap.Map, merge bool) {
-	if d.state != nil && merge {
+func (d *BLEDevice) updateState(data gap.Map) {
+	if data.IsEvent() {
+		mqttPublish("gw3/"+d.MAC+"/event", data, false)
+		return
+	}
+
+	if d.state != nil {
 		for k, v := range data {
 			d.state[k] = v
 		}
 	} else {
 		d.state = data
 	}
-	mqttPublish("gw3/"+d.MAC, d.state, merge)
+	mqttPublish("gw3/"+d.MAC+"/state", d.state, true)
 }
 
 func (d *BLEDevice) getState() {

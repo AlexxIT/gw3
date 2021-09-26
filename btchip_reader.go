@@ -210,17 +210,17 @@ func btchipProcessExtResponse(data []byte) int {
 	switch msg.ServiceUUID {
 	case 0x181A:
 		if payload = gap.ParseATC1441(msg.Raw[0x16][2:]); payload != nil {
-			btchipProcessBLE(msg.MAC, "atc1441", payload, true)
+			btchipProcessBLE(msg.MAC, "atc1441", payload)
 		}
 
 	case 0x181B:
 		if payload = gap.ParseMiScalesV2(msg.Raw[0x16][2:]); payload != nil {
-			btchipProcessBLE(msg.MAC, "miscales2", payload, false)
+			btchipProcessBLE(msg.MAC, "miscales2", payload)
 		}
 
 	case 0x181D:
 		if payload = gap.ParseMiScalesV1(msg.Raw[0x16][2:]); payload != nil {
-			btchipProcessBLE(msg.MAC, "miscales", payload, false)
+			btchipProcessBLE(msg.MAC, "miscales", payload)
 		}
 
 	case 0xFE95:
@@ -235,7 +235,7 @@ func btchipProcessExtResponse(data []byte) int {
 				miioBleQueryDev(mibeacon.Mac, mibeacon.Pdid)
 			}
 			advType := fmt.Sprintf("mi:%d", mibeacon.Pdid)
-			btchipProcessBLE(msg.MAC, advType, mibeacon.Decode(), true)
+			btchipProcessBLE(msg.MAC, advType, mibeacon.Decode())
 		}
 	}
 
@@ -255,12 +255,12 @@ func btchipProcessExtResponse(data []byte) int {
 	return n
 }
 
-func btchipProcessBLE(mac string, advType string, data gap.Map, merge bool) {
+func btchipProcessBLE(mac string, advType string, data gap.Map) {
 	device, ok := devices[mac]
 	if !ok {
 		device = newBLEDevice(mac, advType)
 	}
-	device.(*BLEDevice).updateState(data, merge)
+	device.(*BLEDevice).updateState(data)
 }
 
 var btchipTrackers = make(map[string]uint8)
@@ -280,12 +280,8 @@ func btchipProcessBLETracker(mac string, advType string, rssi int8) {
 		device = newBLEDevice(mac, advType)
 	}
 
-	// if gw init after first BLE events...
-	if gw == nil {
-		return
-	}
-	data := gap.Map{"rssi": rssi, "area": gw.WiFi.MAC}
-	device.(*BLEDevice).updateState(data, false)
+	data := gap.Map{"action": "tracker", "rssi": rssi, "tracker": gw.WiFi.MAC}
+	device.(*BLEDevice).updateState(data)
 }
 
 type RepeatFilter struct {

@@ -7,6 +7,13 @@ import (
 
 type Map map[string]interface{}
 
+func (m Map) IsEvent() bool {
+	if _, ok := m["action"]; ok {
+		return true
+	}
+	return false
+}
+
 func ParseATC1441(b []byte) Map {
 	// without len, 0x16 and 0x181A
 	switch len(b) {
@@ -38,6 +45,7 @@ func ParseMiScalesV1(b []byte) Map {
 	}
 
 	result := Map{
+		"action":     "weight",
 		"stabilized": b[0]&0b100000 > 0,
 		"removed":    b[0]&0b10000000 > 0,
 	}
@@ -64,6 +72,7 @@ func ParseMiScalesV2(b []byte) Map {
 	}
 
 	result := Map{
+		"action":     "weight",
 		"stabilized": b[1]&0b100000 > 0,
 		"removed":    b[1]&0b10000000 > 0,
 	}

@@ -188,11 +188,11 @@ func (b *MiBeacon) Decode() Map {
 			// Qingping Motion Sensor - moving with illuminance data
 			value := uint32(b.Edata[0]) | uint32(b.Edata[1])<<8 | uint32(b.Edata[2])<<16
 			if b.Pdid == 2691 {
-				return Map{"motion": 1, "illuminance": value}
+				return Map{"action": "motion", "motion": 1, "illuminance": value}
 			} else if value >= 100 {
-				return Map{"motion": 1, "light": 1}
+				return Map{"action": "motion", "motion": 1, "light": 1}
 			} else {
-				return Map{"motion": 1, "light": 0}
+				return Map{"action": "motion", "motion": 1, "light": 0}
 			}
 		}
 	case 0x10:
