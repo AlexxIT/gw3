@@ -64,12 +64,12 @@ func miioReader() {
 }
 
 func miioBleQueryDev(mac string, pdid uint16) {
-	//	// not more than once in 30 minutes
+	// not more than once in 60 minutes
 	now := time.Now()
 	if ts, ok := miioBleQueries[mac]; ok && now.Before(ts) {
 		return
 	}
-	miioBleQueries[mac] = now.Add(time.Minute * 30)
+	miioBleQueries[mac] = now.Add(time.Hour)
 
 	log.Debug().Str("mac", mac).Msg("Query bindkey")
 
