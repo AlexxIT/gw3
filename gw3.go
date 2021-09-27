@@ -125,10 +125,8 @@ type ConfigDevice struct {
 }
 
 func (c *Config) GetBindkey(mac string) string {
-	for k, v := range c.Devices {
-		if k == mac {
-			return v.Bindkey
-		}
+	if device, ok := c.Devices[mac]; ok {
+		return device.Bindkey
 	}
 	return ""
 }
