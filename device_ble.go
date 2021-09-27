@@ -19,9 +19,9 @@ var brands = []string{
 	"atc1441", "Xiaomi", "TH Sensor ATC", "ATC1441",
 	"miscales", "Xiaomi", "Mi Scale", "XMTZC01HM",
 	"miscales2", "Xiaomi", "Mi Scale 2", "XMTZC04HM",
-	"ibeacon", "Apple", "iBeacon", "iBeacon",
-	"nut", "NutFind", "Nut", "Nut",
-	"miband", "Xiaomi", "Mi Band", "Mi Band",
+	"ibeacon", "Apple", "iBeacon", "Tracker",
+	"nut", "NutFind", "Nut", "Tracker",
+	"miband", "Xiaomi", "Mi Band", "Tracker",
 	"mi:152", "Xiaomi", "Flower Care", "HHCCJCY01",
 	"mi:131", "Xiaomi", "Kettle", "YM-K1501", // CH, HK, RU version
 	"mi:275", "Xiaomi", "Kettle", "YM-K1501", // international
