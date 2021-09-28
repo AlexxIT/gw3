@@ -75,6 +75,10 @@ func newBLEDevice(mac string, advType string) *BLEDevice {
 		}
 	}
 
+	if device.Model == "" {
+		device.Model = advType
+	}
+
 	devices[mac] = device
 	mqttPublish("gw3/"+mac+"/info", device, true)
 	return device
