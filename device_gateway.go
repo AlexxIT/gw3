@@ -3,7 +3,10 @@ package main
 type GatewayDevice struct {
 	Type      string `json:"type"`
 	FwVersion string `json:"fw_version,omitempty"`
-	Miio      struct {
+	Gw3       struct {
+		Version string `json:"version,omitempty"`
+	} `json:"gw3"`
+	Miio struct {
 		Did string `json:"did,omitempty"`
 	} `json:"miio"`
 	WiFi struct {
@@ -21,6 +24,7 @@ func newGatewayDevice() *GatewayDevice {
 	did, mac := shellDeviceInfo()
 
 	device := &GatewayDevice{Type: "gateway"}
+	device.Gw3.Version = version
 	device.Miio.Did = did
 	device.WiFi.MAC = mac
 	devices[mac] = device
