@@ -19,13 +19,70 @@ type MiBeacon struct {
 
 func (b *MiBeacon) Decode() Map {
 	switch b.Eid {
-	case 0:
-		return Map{}
 	case 0x1001: // 4097
-		if len(b.Edata) == 3 {
-			// TODO: remotes...
-			value := fmt.Sprintf("%d", b.Edata[0])
-			return Map{"action": value}
+		if len(b.Edata) != 3 {
+			return nil
+		}
+		var action string
+		switch b.Pdid {
+		case 950: // Yeelight Dimmer
+			switch b.Edata[2] {
+			case 3:
+				switch b.Edata[0] {
+				case 0:
+					switch b.Edata[1] {
+					case 1:
+						action = "single"
+					case 2:
+						action = "double"
+					case 3:
+						action = "triple"
+					case 4:
+						action = "quadruple"
+					case 5:
+						action = "quintuple"
+					}
+				case 1:
+					return Map{"action": "hold", "duration": b.Edata[1]}
+				}
+			case 4:
+				if b.Edata[0] == 0 {
+					// rotate with sign (right or left)
+					angle := int8(b.Edata[1])
+					return Map{"action": "rotate", "angle": angle}
+				} else if b.Edata[1] == 0 {
+					// hold and rotate with sign (right or left)
+					angle := int8(b.Edata[0])
+					return Map{"action": "rotate_hold", "angle": angle}
+				}
+			}
+		case 1249: // Xiaomi Magic Cube
+			switch b.Edata[0] {
+			case 0:
+				action = "right"
+			case 1:
+				action = "left"
+			}
+		case 1983: // Yeelight Button S1
+			switch b.Edata[2] {
+			case 0:
+				action = "single"
+			case 1:
+				action = "double"
+			case 2:
+				action = "hold"
+			}
+		default:
+			if b.Edata[0] == 0 {
+				// Xiaomi Motion Sensor 2, Xiaomi Water Leak Sensor
+				action = "single"
+			} else {
+				// all unknown devices
+				action = fmt.Sprintf("%x", b.Edata)
+			}
+		}
+		if action != "" {
+			return Map{"action": action}
 		}
 	case 0x1002: // 4098
 		// No sleep (0x00), falling asleep (0x01)
@@ -205,7 +262,7 @@ func (b *MiBeacon) Decode() Map {
 			}
 		}
 	}
-	return Map{"raw": b}
+	return nil
 }
 
 func ParseMiBeacon(data []byte, getBindkey func(string) string) (mibeacon *MiBeacon, useful byte) {

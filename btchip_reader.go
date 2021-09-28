@@ -260,7 +260,9 @@ func btchipProcessBLE(mac string, advType string, data gap.Map) {
 	if !ok {
 		device = newBLEDevice(mac, advType)
 	}
-	device.(*BLEDevice).updateState(data)
+	if data != nil {
+		device.(*BLEDevice).updateState(data)
+	}
 }
 
 var btchipTrackers = make(map[string]uint8)
