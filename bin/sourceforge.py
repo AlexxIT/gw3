@@ -27,6 +27,7 @@ print(hex_)
 
 f = io.BytesIO(raw)
 f.seek(0)
-
+scp.putfo(f, '/home/frs/project/mgl03/bin/gw3')
+f.seek(0)
 scp.putfo(f, '/home/frs/project/mgl03/gw3/' + hex_)
 scp.close()

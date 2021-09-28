@@ -17,6 +17,7 @@ var (
 	config  = &Config{}
 	devices = make(map[string]interface{})
 	gw      = newGatewayDevice()
+	version string
 )
 
 func main() {
@@ -51,6 +52,8 @@ var (
 )
 
 func mainInitLogger() {
+	v := flag.Bool("v", false, "Prints current version")
+
 	// log levels: debug, info, warn (default)
 	// advanced debug:
 	//   - btraw - all BT raw data except GAP
@@ -58,12 +61,18 @@ func mainInitLogger() {
 	//   - miio - miio raw data
 	// log out: syslog, mqtt, stdout (default)
 	// log format: json, text (nocolor), console (default)
-	logs := flag.String("log", "warn+stdout+console",
+	logs := flag.String("log", "",
 		"Logs modes: debug,info + btraw,btgap,miio + syslog,mqtt + json,text")
+
 	flag.DurationVar(&config.discoveryDelay, "dd", time.Minute, "BLE discovery delay")
 	flag.DurationVar(&config.patchDelay, "pd", 5*time.Minute, "Silabs patch delay, 0 - disabled")
 
 	flag.Parse()
+
+	if *v {
+		println(version)
+		os.Exit(0)
+	}
 
 	if strings.Contains(*logs, "debug") {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
