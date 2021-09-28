@@ -8,10 +8,8 @@ import (
 type Map map[string]interface{}
 
 func (m Map) IsEvent() bool {
-	if _, ok := m["action"]; ok {
-		return true
-	}
-	return false
+	_, ok := m["action"]
+	return ok
 }
 
 func ParseATC1441(b []byte) Map {
