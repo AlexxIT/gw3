@@ -5,7 +5,9 @@
 
 Standalone application for integrating **Xiaomi Mijia Smart Multi-Mode Gateway (aka Xiaomi Gateway 3)** into an open source Smart Home platforms.
 
-The application runs directly on the gateway and converts data from surrounding BLE devices into MQTT-topics.
+The application runs directly on the gateway and converts data from surrounding BLE devices into MQTT-topics. All default gateway functionality continues to work as usual in the Mi Home ecosystem.
+
+The app only needs the Internet to download the encryption keys for Xiaomi devices. The rest of the time, the app works without the Internet.
 
 ## Supported BLE Devices
 
@@ -13,7 +15,7 @@ BLE devices are not linked to any specific gateway. Their data can be received b
 
 **Mi Home Devices**
 
-All Xiaomi devices must be linked to an account via the Mi Home app, otherwise they don't send data. Some Xioami devices have encryption. The app will automatically retrieve encryption keys for the user's devices from the cloud. The app will display all unencrypted devices, even if they are connected to another account.
+All Xiaomi devices must be linked to an account via the Mi Home app, otherwise they don't send data. Some Xioami devices have encryption. The app will automatically retrieve encryption keys for your devices from the cloud. The app will display all unencrypted devices, even if they are connected to another account.
 
 - Aqara Door Lock N100 (ZNMS16LM)
 - Aqara Door Lock N200 (ZNMS17LM)
@@ -72,13 +74,15 @@ If you are still here:
 2. Install [custom firmware](https://github.com/zvldz/mgl03_fw/tree/main/firmware)
    - it will open telnet forever (until the next firmware update)
    - it will run public MQTT on gateway (without auth)
-   - it will allow you to run you startup script
-3. Download lastest [gw3 binary](https://sourceforge.net/projects/mgl03/files/bin/):
+   - it will allow you to run your startup script
+3. Download lastest [gw3 binary](https://sourceforge.net/projects/mgl03/files/bin/) on gateway:
    ```shell
    wget "http://master.dl.sourceforge.net/project/mgl03/bin/gw3?viasf=1" -O /data/gw3 && chmod +x /data/gw3
    ```
-4. Add your startup script `/data/run.sh`
+4. Add your startup script `/data/run.sh` on gateway:
    ```shell
    echo "/data/gw3 -log=syslog,info 2>&1 | mosquitto_pub -t gw3/stderr -s &" > /data/run.sh && chmod +x /data/run.sh
    ```
 5. Reboot gateway
+
+**PS:** gw3 binary can run on the original gateway firmware. Custom firmware is an optional step that just makes your life easier. Custom firmware doesn't change default gateway functionality in Mi Home ecosystem.
