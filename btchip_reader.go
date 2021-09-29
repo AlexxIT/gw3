@@ -43,11 +43,13 @@ func btchipReader() {
 	var skipN int
 
 	state := StateNone
+	gw.updateState("setup")
 
 	// We wait a minute for the start of discovery mode. After that any data from the chip updates the timer.
 	var discoveryTimer *time.Timer
 	discoveryTimer = time.AfterFunc(time.Minute, func() {
 		state = StateNone
+		gw.updateState("setup")
 
 		log.Info().Str("state", "restart").Msg("Bluetooth state")
 		shellSilabsStop()
@@ -98,10 +100,12 @@ func btchipReader() {
 			case bglib.Cmd_le_gap_start_discovery:
 				shellPatchTimerStart()
 				state = StateDiscovery
+				gw.updateState("discovery")
 				log.Info().Str("state", "discovery").Msg("Bluetooth state")
 			case bglib.Evt_system_boot:
 				shellPatchTimerStop()
 				state = StateReset
+				gw.updateState("setup")
 				if !bglib.IsResetCmd(btchipReq) {
 					// silabs_ncp_bt reboot chip at startup using GPIO
 					log.Info().Str("state", "hardreset").Msg("Bluetooth state")

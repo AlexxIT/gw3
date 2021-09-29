@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/AlexxIT/gw3/dict"
+)
+
 type GatewayDevice struct {
 	Type      string `json:"type"`
 	FwVersion string `json:"fw_version,omitempty"`
@@ -18,6 +22,7 @@ type GatewayDevice struct {
 		FwVersion string `json:"fw_version,omitempty"`
 		IVIndex   uint32 `json:"ivi"`
 	} `json:"bt"`
+	state string
 }
 
 func newGatewayDevice() *GatewayDevice {
@@ -34,6 +39,15 @@ func newGatewayDevice() *GatewayDevice {
 
 func (d *GatewayDevice) updateInfo() {
 	mqttPublish("gw3/"+d.WiFi.MAC+"/info", d, true)
+}
+
+func (d *GatewayDevice) updateState(state string) {
+	// skip same state
+	if state == d.state {
+		return
+	}
+	data := dict.Dict{"state": state}
+	mqttPublish("gw3/"+d.WiFi.MAC+"/state", data, true)
 }
 
 func (d *GatewayDevice) updateBT(fw string, addr uint16, ivi uint32) {

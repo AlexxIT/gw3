@@ -4,8 +4,6 @@ github.com/huin/gobinarytest v0.0.0-20170803182140-bc6c19e91749 h1:uEtvxEWZtnFRu
 github.com/huin/gobinarytest v0.0.0-20170803182140-bc6c19e91749/go.mod h1:NLS5Is63wKCuzcJLN28yt3sm/Ps9OXNd9GPUlO4wfFA=
 github.com/huin/mqtt v0.0.0-20200914141616-61735481eb15 h1:BT2uKnsrOQvQzZjFIpDMMfHFV7O5nX7Sc5ekEJjojbM=
 github.com/huin/mqtt v0.0.0-20200914141616-61735481eb15/go.mod h1:zbO4h3NDGxpAVWGYzQNle+BDfuwm8fWcgVxFuIHyuas=
-github.com/jeffallen/mqtt v0.0.0-20180518073322-5387cfa89df0 h1:ESdZtIOKF9F7Ah9lbdKyc0xiioZvnGe3XrvXzgEka0Y=
-github.com/jeffallen/mqtt v0.0.0-20180518073322-5387cfa89df0/go.mod h1:5VmMaANxUXHvNfKSdcjuEYlAFnxsu6vVAr6kgQOoUG4=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/rs/xid v1.3.0/go.mod h1:trrq9SKmegXys3aeAKXMUTdJsYXVwGY3RLcfgqegfbg=
 github.com/rs/zerolog v1.25.0 h1:Rj7XygbUHKUlDPcVdoLyR91fJBsduXj5fRxyqIQj/II=

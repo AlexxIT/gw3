@@ -3,8 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/AlexxIT/gw3/mqtt"
 	proto "github.com/huin/mqtt"
-	"github.com/jeffallen/mqtt"
 	"github.com/rs/zerolog/log"
 	"net"
 	"strings"
@@ -20,8 +20,12 @@ func mqttReader() {
 			log.Error().Err(err).Send()
 		} else {
 			mqttClient = mqtt.NewClientConn(conn)
-			mqttClient.ClientId = "gw3"
-			if err = mqttClient.Connect("", ""); err != nil {
+			if err = mqttClient.Connect(&proto.Connect{
+				ClientId: "gw3",
+				WillRetain: true,
+				WillTopic: "gw3/"+gw.WiFi.MAC+"/state",
+				WillMessage: `{"state":"offline"}`,
+			}); err != nil {
 				log.Error().Err(err).Send()
 			} else {
 				gw.updateInfo()
