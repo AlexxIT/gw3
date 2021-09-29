@@ -53,11 +53,11 @@ func miioReader() {
 
 		switch method {
 		case miio.BleQueryDev:
-			result := data.GetDict("result")
-			if result != nil {
-				mac := result.GetString("mac", "")
-				beaconkey := result.GetString("beaconkey", "")
-				config.SetBindKey(mac, beaconkey)
+			if result := data.GetDict("result"); result != nil {
+				if mac, ok := result.TryGetString("mac"); ok {
+					beaconkey := result.GetString("beaconkey", "")
+					config.SetBindKey(mac, beaconkey)
+				}
 			}
 		}
 	}

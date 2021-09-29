@@ -29,7 +29,7 @@ func EncodeBleQueryDev(mac string, pdid uint16) []byte {
 }
 
 type Response struct {
-	id uint32
+	Id uint32 `json:"id"`
 }
 
 func DecodeMethod(p []byte) string {
@@ -37,8 +37,8 @@ func DecodeMethod(p []byte) string {
 	if err := json.Unmarshal(p, &payload); err != nil {
 		log.Warn().Err(err).Send()
 	} else {
-		if method, ok := requests[payload.id]; ok {
-			delete(requests, payload.id)
+		if method, ok := requests[payload.Id]; ok {
+			delete(requests, payload.Id)
 			return method
 		}
 	}
