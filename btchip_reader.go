@@ -24,7 +24,7 @@ func btchipInit() {
 		//RTSCTSFlowControl: true,
 	})
 	if err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 }
 
@@ -134,7 +134,7 @@ func btchipReader() {
 
 		_, err = btapp.Write(p[:n])
 		if err != nil {
-			log.Fatal().Err(err).Send()
+			log.Panic().Err(err).Send()
 		}
 	}
 }
@@ -176,7 +176,7 @@ func btchipWriter() {
 		log.WithLevel(btraw).Hex("data", btchipReq).Msg("=>btraw")
 
 		if _, err := btchip.Write(btchipReq); err != nil {
-			log.Fatal().Err(err).Send()
+			log.Panic().Err(err).Send()
 		}
 
 		//log.Debug().Msg("wait")

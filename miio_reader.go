@@ -17,13 +17,13 @@ func miioReader() {
 
 	miioConn, err = net.Dial("unixpacket", "/tmp/miio_agent.socket")
 	if err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 
 	// bind 8 - homekitapp
 	p := miio.EncodeBind(128)
 	if _, err = miioConn.Write(p); err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 
 	p = make([]byte, 1024)

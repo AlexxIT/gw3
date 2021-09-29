@@ -22,7 +22,7 @@ func btappInit() {
 		MinimumReadSize: 1,
 	})
 	if err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 }
 

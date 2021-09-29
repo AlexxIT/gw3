@@ -1,3 +1,8 @@
+/**
+log.Panic().Err(err).Send() - output to default and stderr with trace and exit app
+log.Fatal() - output to default and exit app, useless!
+log.Error().Caller().Err(err).Send() - output to default with line number
+*/
 package main
 
 import (
@@ -99,7 +104,7 @@ func mainInitLogger() {
 		var err error
 		writer, err = syslog.New(syslog.LOG_USER|syslog.LOG_NOTICE, "gw3")
 		if err != nil {
-			log.Fatal().Err(err).Send()
+			log.Panic().Err(err).Send()
 		}
 	} else if strings.Contains(*logs, "mqtt") {
 		writer = mqttLogWriter{}
@@ -119,7 +124,7 @@ func mainInitConfig() {
 		return
 	}
 	if err = json.Unmarshal(data, config); err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 }
 
@@ -148,12 +153,13 @@ func (c *Config) SetBindKey(mac string, bindkey string) {
 
 	data, err := json.Marshal(c)
 	if err != nil {
-		log.Fatal().Err(err).Send()
+		log.Error().Caller().Err(err).Send()
+		return
 	}
 	log.Info().Str("mac", mac).Msg("Write new bindkey to config")
 
 	if err = ioutil.WriteFile("/data/gw3.json", data, 0666); err != nil {
-		log.Fatal().Err(err).Send()
+		log.Error().Caller().Err(err).Send()
 	}
 }
 

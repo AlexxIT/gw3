@@ -46,7 +46,7 @@ func shellDaemonStart() {
 		if err != nil {
 			data, err = ioutil.ReadFile("/usr/app/bin/daemon_miio.sh")
 			if err != nil {
-				log.Fatal().Err(err).Send()
+				log.Panic().Err(err).Send()
 			}
 		}
 
@@ -54,7 +54,7 @@ func shellDaemonStart() {
 
 		// write patched script
 		if err = ioutil.WriteFile("/tmp/daemon_miio.sh", data, 0x777); err != nil {
-			log.Fatal().Err(err).Send()
+			log.Panic().Err(err).Send()
 		}
 	}
 
@@ -68,13 +68,13 @@ func shellFreeTTY() {
 	for i := 1; ; i++ {
 		out, err := exec.Command("sh", "-c", "lsof | grep ptyp8 | cut -f 1").Output()
 		if err != nil {
-			log.Fatal().Err(err).Send()
+			log.Panic().Err(err).Send()
 		}
 		if len(out) == 0 {
 			return
 		}
 		if i == 4 {
-			log.Fatal().Msg("Can't free TTY")
+			log.Panic().Msg("Can't free TTY")
 		}
 		// remove leading new line: "1234\n"
 		pid := string(out[:len(out)-1])
@@ -94,7 +94,7 @@ func shellDeviceInfo() (did string, mac string) {
 	// model=lumi.gateway.mgl03
 	data, err := ioutil.ReadFile("/data/miio/device.conf")
 	if err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 	for _, line := range strings.Split(string(data), "\n") {
 		if len(line) < 5 {
@@ -150,14 +150,14 @@ func shellPatchSilabs() {
 	data, err := ioutil.ReadFile("/bin/silabs_ncp_bt")
 	if err != nil {
 		if data, err = ioutil.ReadFile("/usr/app/bin/silabs_ncp_bt"); err != nil {
-			log.Fatal().Err(err).Send()
+			log.Panic().Err(err).Send()
 		}
 	}
 
 	// same length before and after
 	data = bytes.Replace(data, []byte("/data/"), []byte("/tmp//"), -1)
 	if err = ioutil.WriteFile("/tmp/silabs_ncp_bt", data, 0x777); err != nil {
-		log.Fatal().Err(err).Send()
+		log.Panic().Err(err).Send()
 	}
 
 	// copy databases

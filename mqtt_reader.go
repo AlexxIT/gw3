@@ -17,7 +17,7 @@ func mqttReader() {
 	for {
 		conn, err := net.Dial("tcp", "127.0.0.1:1883")
 		if err != nil {
-			log.Error().Err(err).Send()
+			log.Error().Caller().Err(err).Send()
 		} else {
 			mqttClient = mqtt.NewClientConn(conn)
 			if err = mqttClient.Connect(&proto.Connect{
@@ -26,7 +26,7 @@ func mqttReader() {
 				WillTopic: "gw3/"+gw.WiFi.MAC+"/state",
 				WillMessage: `{"state":"offline"}`,
 			}); err != nil {
-				log.Error().Err(err).Send()
+				log.Error().Caller().Err(err).Send()
 			} else {
 				gw.updateInfo()
 				mqttClient.Subscribe([]proto.TopicQos{
@@ -35,7 +35,7 @@ func mqttReader() {
 				for m := range mqttClient.Incoming {
 					buf := bytes.Buffer{}
 					if err = m.Payload.WritePayload(&buf); err != nil {
-						log.Error().Err(err).Send()
+						log.Error().Caller().Err(err).Send()
 						continue
 					}
 
