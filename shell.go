@@ -64,17 +64,26 @@ func shellDaemonStart() {
 }
 
 func shellFreeTTY() {
-	out, err := exec.Command("sh", "-c", "lsof | grep ptyp8 | cut -f 1").Output()
-	if err != nil {
-		log.Fatal().Err(err).Send()
+	// three attempts
+	for i := 1; ; i++ {
+		out, err := exec.Command("sh", "-c", "lsof | grep ptyp8 | cut -f 1").Output()
+		if err != nil {
+			log.Fatal().Err(err).Send()
+		}
+		if len(out) == 0 {
+			return
+		}
+		if i == 4 {
+			log.Fatal().Msg("Can't free TTY")
+		}
+		// remove leading new line: "1234\n"
+		pid := string(out[:len(out)-1])
+		log.Debug().Str("pid", pid).Msg("Releasing the TTY")
+		_ = exec.Command("kill", pid).Run()
+
+		// wait after release
+		time.Sleep(time.Duration(i) * time.Second)
 	}
-	if len(out) == 0 {
-		return
-	}
-	// remove leading new line: "1234\n"
-	pid := string(out[:len(out)-1])
-	log.Debug().Str("pid", pid).Msg("Releasing the TTY")
-	_ = exec.Command("kill", pid).Run()
 }
 
 func shellDeviceInfo() (did string, mac string) {
