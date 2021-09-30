@@ -88,6 +88,9 @@ func (d *GatewayDevice) setState(p []byte) {
 		log.Warn().Err(err).Send()
 		return
 	}
+	if alarmState, ok := payload.TryGetString("alarm_state"); ok {
+		miioEncodeGatewayProps(alarmState)
+	}
 	if value, ok := payload.TryGetString("test"); ok {
 		switch value {
 		case "error":

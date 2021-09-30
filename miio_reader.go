@@ -173,32 +173,44 @@ func miioBleQueryDev(mac string, pdid uint16) {
 	}
 }
 
-func miioDecodeGatewayProps(props *dict.Dict) {
-	if props.GetUint8("siid", 0) != 3 {
+// name: {siid, piid, value}
+var miioAlarmStates = map[string][3]uint8{
+	"disarmed":    {3, 1, 0},
+	"armed_home":  {3, 1, 1},
+	"armed_away":  {3, 1, 2},
+	"armed_night": {3, 1, 3},
+	"":            {3, 22, 0},
+	"triggered":   {3, 22, 1},
+}
+
+func miioEncodeGatewayProps(state string) {
+	pair, ok := miioConn[Gateway]
+	if !ok {
+		log.Debug().Msg("Can't set gateway props")
 		return
 	}
-	switch props.GetUint8("piid", 0) {
-	case 1:
-		if value, ok := props.TryGetNumber("value"); ok {
-			switch value {
-			case 0:
-				gw.updateAlarmState("disarmed")
-			case 1:
-				gw.updateAlarmState("armed_home")
-			case 2:
-				gw.updateAlarmState("armed_away")
-			case 3:
-				gw.updateAlarmState("armed_night")
-			}
+
+	if v, ok := miioAlarmStates[state]; ok {
+		id := uint32(time.Now().Nanosecond()) & 0xFFFFFF
+		p := []byte(fmt.Sprintf(
+			`{"from":"4","id":%d,"method":"set_properties","params":[{"did":"%s","piid":%d,"siid":%d,"value":%d}]}`,
+			id, gw.Miio.Did, v[1], v[0], v[2],
+		))
+
+		if _, err := pair.inc.Write(p); err != nil {
+			log.Warn().Err(err).Send()
 		}
-	case 22:
-		if value, ok := props.TryGetNumber("value"); ok {
-			switch value {
-			case 0:
-				gw.updateAlarmState("")
-			case 1:
-				gw.updateAlarmState("triggered")
-			}
+	}
+}
+
+func miioDecodeGatewayProps(props *dict.Dict) {
+	siid := props.GetUint8("siid", 0)
+	piid := props.GetUint8("piid", 0)
+	value := props.GetUint8("value", 255)
+	for k, v := range miioAlarmStates {
+		if v[0] == siid && v[1] == piid && v[2] == value {
+			gw.updateAlarmState(k)
+			return
 		}
 	}
 }
