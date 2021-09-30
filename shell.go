@@ -24,40 +24,15 @@ import (
 	"time"
 )
 
-func shellDaemonStop() {
-	_ = exec.Command("killall", "daemon_miio.sh").Run()
-}
-
-func shellSilabsStop() {
-	_ = exec.Command("killall", "silabs_ncp_bt").Run()
+func shellKillall(filename string) {
+	_ = exec.Command("killall", filename).Run()
 }
 
 func shellUpdatePath() {
 	_ = os.Setenv("PATH", "/tmp:"+os.Getenv("PATH"))
 }
 
-func shellDaemonStart() {
-	if _, err := os.Stat("/tmp/daemon_miio.sh"); os.IsNotExist(err) {
-		log.Info().Msg("Patch daemon_miio.sh")
-
-		var data []byte
-		// read original file (firmware v1.4.7_0063+)
-		data, err = ioutil.ReadFile("/bin/daemon_miio.sh")
-		if err != nil {
-			data, err = ioutil.ReadFile("/usr/app/bin/daemon_miio.sh")
-			if err != nil {
-				log.Panic().Err(err).Send()
-			}
-		}
-
-		data = bytes.Replace(data, []byte("ttyS1"), []byte("ttyp8"), 1)
-
-		// write patched script
-		if err = ioutil.WriteFile("/tmp/daemon_miio.sh", data, 0x777); err != nil {
-			log.Panic().Err(err).Send()
-		}
-	}
-
+func shellRunDaemon() {
 	log.Debug().Msg("Run daemon_miio.sh")
 	// run patched script without error processing
 	_ = exec.Command("sh", "-c", "daemon_miio.sh&").Start()
@@ -122,11 +97,11 @@ func shellPatchTimerStart() {
 	if shellPatchTimer == nil {
 		log.Debug().Msg("Start patch timer")
 		shellPatchTimer = time.AfterFunc(config.patchDelay, func() {
-			shellPatchSilabs()
+			shellPatchApp("silabs_ncp_bt")
 			// we need to restart daemon because new binary in tmp path
-			shellDaemonStop()
-			shellSilabsStop()
-			shellDaemonStart()
+			shellKillall("daemon_miio.sh")
+			shellKillall("silabs_ncp_bt")
+			shellRunDaemon()
 			shellPatchTimer = nil
 		})
 	} else {
@@ -142,24 +117,42 @@ func shellPatchTimerStop() {
 	}
 }
 
-// Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
-// It's not a problem to lose this base, because the gateway will restore it from the cloud.
-func shellPatchSilabs() {
-	log.Info().Msg("Patch silabs_ncp_bt")
+func shellPatchApp(filename string) bool {
+	if _, err := os.Stat("/tmp/" + filename); !os.IsNotExist(err) {
+		return false
+	}
 
-	data, err := ioutil.ReadFile("/bin/silabs_ncp_bt")
+	log.Info().Str("file", filename).Msg("Patch app")
+
+	// read original file (firmware v1.4.7_0063+)
+	data, err := ioutil.ReadFile("/bin/" + filename)
 	if err != nil {
-		if data, err = ioutil.ReadFile("/usr/app/bin/silabs_ncp_bt"); err != nil {
+		data, err = ioutil.ReadFile("/usr/app/bin/" + filename)
+		if err != nil {
 			log.Panic().Err(err).Send()
 		}
 	}
 
-	// same length before and after
-	data = bytes.Replace(data, []byte("/data/"), []byte("/tmp//"), -1)
-	if err = ioutil.WriteFile("/tmp/silabs_ncp_bt", data, 0x777); err != nil {
+	switch filename {
+	case "daemon_miio.sh":
+		// silabs_ncp_bt will work with out proxy-TTY
+		data = bytes.Replace(data, []byte("ttyS1"), []byte("ttyp8"), 1)
+	case "silabs_ncp_bt":
+		// Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
+		// It's not a problem to lose this base, because the gateway will restore it from the cloud.
+		data = bytes.Replace(data, []byte("/data/"), []byte("/tmp//"), -1)
+
+		// copy databases
+		_ = exec.Command("cp", "-R", "/data/miio", "/data/ble_info", "/tmp/").Run()
+	case "miio_agent":
+		// miio_agent will work with out proxy-socket
+		data = bytes.Replace(data, []byte("/tmp/miio_agent.socket"), []byte("/tmp/true_agent.socket"), -1)
+	}
+
+	// write patched script
+	if err = ioutil.WriteFile("/tmp/"+filename, data, 0x777); err != nil {
 		log.Panic().Err(err).Send()
 	}
 
-	// copy databases
-	_ = exec.Command("cp", "-R", "/data/miio", "/data/ble_info", "/tmp/").Run()
+	return true
 }

@@ -52,7 +52,7 @@ func btchipReader() {
 		gw.updateState("setup")
 
 		log.Info().Str("state", "restart").Msg("Bluetooth state")
-		shellSilabsStop()
+		shellKillall("silabs_ncp_bt")
 
 		discoveryTimer.Reset(config.discoveryDelay)
 	})

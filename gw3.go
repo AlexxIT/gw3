@@ -28,15 +28,26 @@ var (
 func main() {
 	mainInitConfig()
 
-	shellUpdatePath()
-	shellDaemonStop()
-	shellSilabsStop()
+	// kill other gw3 binary
 	shellFreeTTY()
+	shellUpdatePath()
+
+	// kill daemon_miio.sh before kill silabs_ncp_bt
+	shellKillall("daemon_miio.sh")
+	// kill silabs_ncp_bt before open TTY
+	shellKillall("silabs_ncp_bt")
 
 	btappInit()
 	btchipInit()
 
-	shellDaemonStart()
+	// patch and kill miio_agent if needed
+	if shellPatchApp("miio_agent") {
+		shellKillall("miio_agent")
+	}
+	// patch daemon_miio.sh if needed
+	shellPatchApp("daemon_miio.sh")
+	// run daemon_miio.sh what runs other apps from /tmp or /bin
+	shellRunDaemon()
 
 	go btchipReader()
 	go btchipWriter()
