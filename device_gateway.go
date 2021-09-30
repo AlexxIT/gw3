@@ -52,6 +52,10 @@ func (d *GatewayDevice) updateState(state string) {
 	mqttPublish("gw3/"+d.WiFi.MAC+"/state", data, true)
 }
 
+func (d *GatewayDevice) updateEvent(data *dict.Dict) {
+	mqttPublish("gw3/"+d.WiFi.MAC+"/event", data, false)
+}
+
 func (d *GatewayDevice) updateBT(fw string, addr uint16, ivi uint32) {
 	d.BT.FwVersion = fw
 	d.BT.Addr = addr

@@ -101,7 +101,15 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 				}
 			case Zigbee:
 				if incoming {
-					if data.GetString("method", "") == "_sync.zigbee3_bind" {
+					switch data.GetString("method", "") {
+					case "event.gw.heartbeat":
+						if param := data.GetArrayItem("params", 0); param != nil {
+							// {"free_mem":5600,"ip":"192.168.1.123","load_avg":"3.18|3.05|2.79|3/95|25132","rssi":65,
+							//  "run_time":43783,"setupcode":"123-45-678","ssid":"WiFi","tz":"GMT3"}
+							(*param)["action"] = "heartbeat"
+							gw.updateEvent(param)
+						}
+					case "_sync.zigbee3_bind":
 						fixZigbee3Bind = data.GetUint32("id", 0)
 					}
 				} else {
