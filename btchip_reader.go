@@ -71,7 +71,7 @@ func btchipReader() {
 		if err == nil {
 			// don't care if skip len lower than 5 bytes
 			if skipN > 4 {
-				log.Warn().Hex("data", skipBuf[:skipN]).Msg("Skip wrong bytes")
+				log.WithLevel(btskip).Hex("data", skipBuf[:skipN]).Msg("Skip wrong bytes")
 			}
 			skipN = 0
 
@@ -126,7 +126,7 @@ func btchipReader() {
 				discoveryTimer.Reset(config.discoveryDelay)
 			}
 		} else if n > 1 {
-			log.Warn().Hex("data", p[:n]).Msg("Skip wrong bytes")
+			log.WithLevel(btskip).Hex("data", p[:n]).Msg("Skip wrong bytes")
 		} else if skipN < 256 {
 			skipBuf[skipN] = p[0]
 			skipN++
