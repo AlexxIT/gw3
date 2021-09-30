@@ -42,7 +42,7 @@ func (d *Dict) TryGetNumber(name string) (float64, bool) {
 
 func (d *Dict) GetDict(name string) *Dict {
 	switch (*d)[name].(type) {
-	case interface{}:
+	case map[string]interface{}:
 		i := Dict((*d)[name].(map[string]interface{}))
 		return &i
 	}
@@ -80,7 +80,11 @@ func (d *Dict) GetFloat(name string, def float64) float64 {
 func (d *Dict) GetUint8(name string, def uint8) uint8 {
 	switch (*d)[name].(type) {
 	case float64:
-		return uint8((*d)[name].(float64))
+		x := uint8((*d)[name].(float64))
+		// stupid check, but in some cases the output may be zero
+		if x != def {
+			return x
+		}
 	}
 	return def
 }
@@ -88,7 +92,11 @@ func (d *Dict) GetUint8(name string, def uint8) uint8 {
 func (d *Dict) GetUint16(name string, def uint16) uint16 {
 	switch (*d)[name].(type) {
 	case float64:
-		return uint16((*d)[name].(float64))
+		x := uint16((*d)[name].(float64))
+		// stupid check, but in some cases the output may be zero
+		if x != def {
+			return x
+		}
 	}
 	return def
 }
