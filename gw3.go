@@ -38,6 +38,11 @@ func main() {
 	btappInit()
 	btchipInit()
 
+	// need to restart zigbee_gw after restart mosquitto
+	if shellRunMosquitto() {
+		shellKillall("zigbee_gw")
+	}
+
 	// patch and kill miio_agent if needed
 	if shellPatchApp("miio_agent") {
 		shellKillall("miio_agent")

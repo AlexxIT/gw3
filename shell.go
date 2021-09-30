@@ -53,6 +53,26 @@ func shellRunDaemon() {
 	_ = exec.Command("sh", "-c", "daemon_miio.sh&").Run()
 }
 
+func shellRunMosquitto() bool {
+	if out, err := exec.Command("sh", "-c", "ps | grep mosquitto").Output(); err == nil {
+		if bytes.Contains(out, []byte("mosquitto -d")) {
+			return false
+		}
+	} else {
+		log.Fatal().Err(err).Send()
+	}
+
+	log.Debug().Msg("Run public mosquitto")
+
+	shellKillall("mosquitto")
+
+	time.Sleep(time.Second)
+
+	_ = exec.Command("mosquitto", "-d").Run()
+
+	return true
+}
+
 func shellDeviceInfo() (did string, mac string) {
 	// did=123456789
 	// key=xxxxxxxxxxxxxxxx
