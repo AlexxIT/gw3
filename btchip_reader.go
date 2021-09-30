@@ -80,9 +80,9 @@ func btchipReader() {
 			// process only logs
 			switch header {
 			case bglib.Evt_le_gap_extended_scan_response:
-				log.WithLevel(btgap).Hex("data", p[:n]).Msg("<=btgap")
+				log.WithLevel(btgap).Hex("data", p[:n]).Msg("<-btgap")
 			default:
-				log.WithLevel(btraw).Hex("data", p[:n]).Msg("<=btraw")
+				log.WithLevel(btraw).Hex("data", p[:n]).Msg("<-btraw")
 			}
 
 			// process data
@@ -94,7 +94,7 @@ func btchipReader() {
 					log.Info().Str("state", "setup").Msg("Bluetooth state")
 				}
 			case bglib.Cmd_le_gap_set_discovery_extended_scan_response:
-				log.Debug().Msg("<=cmd_le_gap_set_discovery_extended_scan_response")
+				log.Debug().Msg("<-cmd_le_gap_set_discovery_extended_scan_response")
 				// no need to forward response to this command
 				n = 0
 			case bglib.Cmd_le_gap_start_discovery:
@@ -173,7 +173,7 @@ var btchipReq []byte
 
 func btchipWriter() {
 	for btchipReq = range btchipQueue {
-		log.WithLevel(btraw).Hex("data", btchipReq).Msg("=>btraw")
+		log.WithLevel(btraw).Hex("data", btchipReq).Msg("btraw<-")
 
 		if _, err := btchip.Write(btchipReq); err != nil {
 			log.Panic().Err(err).Send()

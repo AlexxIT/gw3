@@ -41,12 +41,12 @@ func btappReader() {
 			continue
 		}
 
-		//log.WithLevel(btraw).Hex("data", p[:n]).Msg("=>queue")
+		//log.WithLevel(btraw).Hex("data", p[:n]).Msg("queue<-")
 
 		header := uint32(p[0])<<24 | uint32(p[2])<<8 | uint32(p[3])
 		switch header {
 		case bglib.Cmd_system_reset:
-			log.Debug().Msg("=>cmd_system_reset")
+			log.Debug().Msg("<-cmd_system_reset")
 
 			btchipQueueClear()
 			btchipRespClear()
@@ -63,7 +63,7 @@ func btappReader() {
 			btchipQueueAdd(bglib.EncodeGapExtendedScan(1))
 
 		case bglib.Cmd_mesh_node_set_ivrecovery_mode:
-			log.Info().Uint8("enable", p[4]).Msg("=>cmd_mesh_node_set_ivrecovery_mode")
+			log.Info().Uint8("enable", p[4]).Msg("<-cmd_mesh_node_set_ivrecovery_mode")
 		}
 
 		btchipQueueAdd(p[:n])

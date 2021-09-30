@@ -63,9 +63,9 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 
 	var msg string
 	if incoming {
-		msg = "=>miio"
+		msg = "miio<-"
 	} else {
-		msg = "<=miio"
+		msg = "<-miio"
 	}
 
 	var fixZigbee3Bind uint32
