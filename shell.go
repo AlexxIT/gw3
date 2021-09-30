@@ -28,6 +28,21 @@ func shellKillall(filename string) {
 	_ = exec.Command("killall", filename).Run()
 }
 
+func shellFreeTTY() {
+	out, err := exec.Command("sh", "-c", "lsof | grep ptyp8 | cut -f 1").Output()
+	if err != nil {
+		log.Panic().Err(err).Send()
+	}
+	if len(out) == 0 {
+		return
+	}
+
+	// remove leading new line: "1234\n"
+	pid := string(out[:len(out)-1])
+	log.Debug().Str("pid", pid).Msg("Releasing the TTY")
+	_ = exec.Command("kill", pid).Run()
+}
+
 func shellUpdatePath() {
 	_ = os.Setenv("PATH", "/tmp:"+os.Getenv("PATH"))
 }
@@ -36,29 +51,6 @@ func shellRunDaemon() {
 	log.Debug().Msg("Run daemon_miio.sh")
 	// run patched script without error processing
 	_ = exec.Command("sh", "-c", "daemon_miio.sh&").Start()
-}
-
-func shellFreeTTY() {
-	// three attempts
-	for i := 1; ; i++ {
-		out, err := exec.Command("sh", "-c", "lsof | grep ptyp8 | cut -f 1").Output()
-		if err != nil {
-			log.Panic().Err(err).Send()
-		}
-		if len(out) == 0 {
-			return
-		}
-		if i == 4 {
-			log.Panic().Msg("Can't free TTY")
-		}
-		// remove leading new line: "1234\n"
-		pid := string(out[:len(out)-1])
-		log.Debug().Str("pid", pid).Msg("Releasing the TTY")
-		_ = exec.Command("kill", pid).Run()
-
-		// wait after release
-		time.Sleep(time.Duration(i) * time.Second)
-	}
 }
 
 func shellDeviceInfo() (did string, mac string) {

@@ -28,8 +28,6 @@ var (
 func main() {
 	mainInitConfig()
 
-	// kill other gw3 binary
-	shellFreeTTY()
 	shellUpdatePath()
 
 	// kill daemon_miio.sh before kill silabs_ncp_bt

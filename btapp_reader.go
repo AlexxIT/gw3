@@ -14,15 +14,25 @@ var btapp io.ReadWriteCloser
 // btappInit open serial connection to /dev/ptyp8 (virtual serial interface)
 func btappInit() {
 	var err error
-	btapp, err = serial.Open(serial.OpenOptions{
-		PortName:        "/dev/ptyp8",
-		BaudRate:        115200,
-		DataBits:        8,
-		StopBits:        1,
-		MinimumReadSize: 1,
-	})
-	if err != nil {
-		log.Panic().Err(err).Send()
+	for i := 1; ; i++ {
+		btapp, err = serial.Open(serial.OpenOptions{
+			PortName:        "/dev/ptyp8",
+			BaudRate:        115200,
+			DataBits:        8,
+			StopBits:        1,
+			MinimumReadSize: 1,
+		})
+		if err == nil {
+			return
+		}
+		if i == 4 {
+			log.Panic().Err(err).Send()
+		}
+
+		shellFreeTTY()
+
+		// wait after release
+		time.Sleep(time.Duration(i) * time.Second)
 	}
 }
 
