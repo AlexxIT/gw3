@@ -18,22 +18,18 @@ func miioReader() {
 	}
 
 	for {
-		if _, err = os.Stat("/tmp/true_agent.socket"); os.IsNotExist(err) {
-			time.Sleep(time.Second)
-			continue
-		}
-
 		var conn1, conn2 net.Conn
 
-		conn1, err = sock.Accept()
-		if err != nil {
+		if conn1, err = sock.Accept(); err != nil {
 			log.Panic().Err(err).Send()
 		}
 
 		// original socket from miio_agent
-		conn2, err = net.Dial("unixpacket", "/tmp/true_agent.socket")
-		if err != nil {
-			log.Panic().Err(err).Send()
+		for {
+			if conn2, err = net.Dial("unixpacket", "/tmp/true_agent.socket"); err == nil {
+				break
+			}
+			time.Sleep(time.Second)
 		}
 
 		var addr uint8
