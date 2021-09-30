@@ -152,7 +152,15 @@ func (c *Config) SetBindKey(mac string, bindkey string) {
 	if c.Devices == nil {
 		c.Devices = make(map[string]ConfigDevice)
 	}
-	c.Devices[mac] = ConfigDevice{Bindkey: bindkey}
+	if device, ok := c.Devices[mac]; ok {
+		if device.Bindkey == bindkey {
+			// skip if nothing changed
+			return
+		}
+		device.Bindkey = bindkey
+	} else {
+		c.Devices[mac] = ConfigDevice{Bindkey: bindkey}
+	}
 
 	data, err := json.Marshal(c)
 	if err != nil {
