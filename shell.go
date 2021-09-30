@@ -50,7 +50,7 @@ func shellUpdatePath() {
 func shellRunDaemon() {
 	log.Debug().Msg("Run daemon_miio.sh")
 	// run patched script without error processing
-	_ = exec.Command("sh", "-c", "daemon_miio.sh&").Start()
+	_ = exec.Command("sh", "-c", "daemon_miio.sh&").Run()
 }
 
 func shellDeviceInfo() (did string, mac string) {
