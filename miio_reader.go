@@ -70,7 +70,6 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 	for {
 		n, err := conn1.Read(b)
 		if err != nil {
-			log.Debug().Uint8("addr", *addr).Msg("Close miio connection")
 			break
 		}
 
@@ -130,6 +129,10 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 		if _, err = conn2.Write(b[:n]); err != nil {
 			break
 		}
+	}
+
+	if incoming {
+		log.Debug().Uint8("addr", *addr).Msg("Close miio connection")
 	}
 
 	_ = conn2.Close()
