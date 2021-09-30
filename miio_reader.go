@@ -123,10 +123,10 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 					}
 				}
 			case Gateway:
-				if !incoming && data.GetString("method", "") == "properties_changed" {
-					// TODO:
-					// "params":[{"did":"xxx","piid":1,"siid":3,"value":0}]}
-					// "params":[{"did":"xxx","piid":21,"siid":3,"value":0}]}
+				if incoming && data.GetString("method", "") == "properties_changed" {
+					if props := data.GetArrayItem("params", 0); props != nil {
+						miioDecodeGatewayProps(props)
+					}
 				}
 			}
 		}
@@ -170,5 +170,35 @@ func miioBleQueryDev(mac string, pdid uint16) {
 
 	if _, err := pair.out.Write(p); err != nil {
 		log.Warn().Err(err).Send()
+	}
+}
+
+func miioDecodeGatewayProps(props *dict.Dict) {
+	if props.GetUint8("siid", 0) != 3 {
+		return
+	}
+	switch props.GetUint8("piid", 0) {
+	case 1:
+		if value, ok := props.TryGetNumber("value"); ok {
+			switch value {
+			case 0:
+				gw.updateAlarmState("disarmed")
+			case 1:
+				gw.updateAlarmState("armed_home")
+			case 2:
+				gw.updateAlarmState("armed_away")
+			case 3:
+				gw.updateAlarmState("armed_night")
+			}
+		}
+	case 22:
+		if value, ok := props.TryGetNumber("value"); ok {
+			switch value {
+			case 0:
+				gw.updateAlarmState("")
+			case 1:
+				gw.updateAlarmState("triggered")
+			}
+		}
 	}
 }

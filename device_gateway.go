@@ -24,13 +24,14 @@ type GatewayDevice struct {
 		FwVersion string `json:"fw_version,omitempty"`
 		IVIndex   uint32 `json:"ivi"`
 	} `json:"bt"`
-	state string
+	state      dict.Dict
+	alarmState string
 }
 
 func newGatewayDevice() *GatewayDevice {
 	did, mac := shellDeviceInfo()
 
-	device := &GatewayDevice{Type: "gateway"}
+	device := &GatewayDevice{Type: "gateway", state: dict.Dict{}}
 	device.Gw3.Version = version
 	device.Miio.Did = did
 	device.WiFi.MAC = mac
@@ -45,11 +46,25 @@ func (d *GatewayDevice) updateInfo() {
 
 func (d *GatewayDevice) updateState(state string) {
 	// skip same state
-	if state == d.state {
+	if d.state["state"] == state {
 		return
 	}
-	data := dict.Dict{"state": state}
-	mqttPublish("gw3/"+d.WiFi.MAC+"/state", data, true)
+	d.state["state"] = state
+	mqttPublish("gw3/"+d.WiFi.MAC+"/state", d.state, true)
+}
+
+func (d *GatewayDevice) updateAlarmState(state string) {
+	if state != "triggered" {
+		if state == "" {
+			// restore state after triggered
+			state = d.alarmState
+		} else {
+			// remember state before triggered
+			d.alarmState = state
+		}
+	}
+	d.state["alarm_state"] = state
+	mqttPublish("gw3/"+d.WiFi.MAC+"/state", d.state, true)
 }
 
 func (d *GatewayDevice) updateEvent(data *dict.Dict) {
