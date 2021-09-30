@@ -100,7 +100,7 @@ func (d *GatewayDevice) setState(p []byte) {
 			err = errors.New("test")
 			log.Fatal().Caller().Err(err).Send()
 		case "panic":
-			err = errors.New("test error")
+			err = errors.New("test")
 			log.Panic().Err(err).Send()
 		}
 	}
