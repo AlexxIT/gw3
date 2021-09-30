@@ -26,7 +26,6 @@ var (
 )
 
 func main() {
-	mainInitLogger()
 	mainInitConfig()
 
 	shellUpdatePath()
@@ -49,23 +48,9 @@ func main() {
 	select {} // run forever
 }
 
-var (
-	// additional log levels for advanced output
-	btraw   = zerolog.Disabled
-	btgap   = zerolog.Disabled
-	miioraw = zerolog.Disabled
-)
-
-func mainInitLogger() {
+func mainInitConfig() {
 	v := flag.Bool("v", false, "Prints current version")
 
-	// log levels: debug, info, warn (default)
-	// advanced debug:
-	//   - btraw - all BT raw data except GAP
-	//   - btgap - only BT GAP raw data
-	//   - miio - miio raw data
-	// log out: syslog, mqtt, stdout (default)
-	// log format: json, text (nocolor), console (default)
 	logs := flag.String("log", "",
 		"Logs modes: debug,info + btraw,btgap,miio + syslog,mqtt + json,text")
 
@@ -79,53 +64,71 @@ func mainInitLogger() {
 		os.Exit(0)
 	}
 
-	if strings.Contains(*logs, "debug") {
+	if data, err := ioutil.ReadFile("/data/gw3.json"); err == nil {
+		if err = json.Unmarshal(data, config); err != nil {
+			log.Panic().Err(err).Send()
+		}
+	}
+
+	mainInitLogger(*logs)
+}
+
+var (
+	// additional log levels for advanced output
+	btraw   = zerolog.Disabled
+	btgap   = zerolog.Disabled
+	btskip  = zerolog.WarnLevel
+	miioraw = zerolog.Disabled
+)
+
+// log levels: debug, info, warn (default)
+// advanced debug:
+//   - btraw - all BT raw data except GAP
+//   - btgap - only BT GAP raw data
+//   - miio - miio raw data
+// log out: syslog, mqtt, stdout (default)
+// log format: json, text (nocolor), console (default)
+func mainInitLogger(logs string) {
+	if strings.Contains(logs, "debug") {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	} else if strings.Contains(*logs, "info") {
+	} else if strings.Contains(logs, "info") {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	} else {
 		zerolog.SetGlobalLevel(zerolog.WarnLevel)
 	}
 
-	if strings.Contains(*logs, "btraw") {
+	if strings.Contains(logs, "btraw") {
 		btraw = zerolog.NoLevel
 	}
-	if strings.Contains(*logs, "btgap") {
+	if strings.Contains(logs, "btgap") {
 		btgap = zerolog.NoLevel
 	}
-	if strings.Contains(*logs, "miio") {
+	if strings.Contains(logs, "btskip") {
+		btskip = zerolog.Disabled
+	}
+	if strings.Contains(logs, "miio") {
 		miioraw = zerolog.NoLevel
 	}
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
 
 	var writer io.Writer
-	if strings.Contains(*logs, "syslog") {
+	if strings.Contains(logs, "syslog") {
 		var err error
 		writer, err = syslog.New(syslog.LOG_USER|syslog.LOG_NOTICE, "gw3")
 		if err != nil {
 			log.Panic().Err(err).Send()
 		}
-	} else if strings.Contains(*logs, "mqtt") {
+	} else if strings.Contains(logs, "mqtt") {
 		writer = mqttLogWriter{}
 	} else {
 		writer = os.Stdout
 	}
-	if !strings.Contains(*logs, "json") {
-		nocolor := writer != os.Stdout || strings.Contains(*logs, "text")
+	if !strings.Contains(logs, "json") {
+		nocolor := writer != os.Stdout || strings.Contains(logs, "text")
 		writer = zerolog.ConsoleWriter{Out: writer, TimeFormat: "15:04:05.000", NoColor: nocolor}
 	}
 	log.Logger = log.Output(writer)
-}
-
-func mainInitConfig() {
-	data, err := ioutil.ReadFile("/data/gw3.json")
-	if err != nil {
-		return
-	}
-	if err = json.Unmarshal(data, config); err != nil {
-		log.Panic().Err(err).Send()
-	}
 }
 
 type Config struct {
