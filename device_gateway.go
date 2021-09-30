@@ -88,9 +88,22 @@ func (d *GatewayDevice) setState(p []byte) {
 		log.Warn().Err(err).Send()
 		return
 	}
-	if alarmState, ok := payload.TryGetString("alarm_state"); ok {
-		miioEncodeGatewayProps(alarmState)
+
+	if value, ok := payload.TryGetString("alarm_state"); ok {
+		miioEncodeGatewayProps(value)
 	}
+
+	if value, ok := payload.TryGetString("buzzer"); ok {
+		switch value {
+		case "ON":
+			duration := payload.GetUint64("duration", 1)
+			volume := payload.GetUint8("volume", 3)
+			miioEncodeGatewayBuzzer(duration, volume)
+		case "OFF":
+			miioEncodeGatewayBuzzer(0, 0)
+		}
+	}
+
 	if value, ok := payload.TryGetString("test"); ok {
 		switch value {
 		case "error":

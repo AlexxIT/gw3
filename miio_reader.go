@@ -210,3 +210,26 @@ func miioDecodeGatewayProps(props *dict.Dict) {
 		}
 	}
 }
+
+func miioEncodeGatewayBuzzer(duration uint64, volume uint8) {
+	pair, ok := miioConn[Basic]
+	if !ok {
+		log.Debug().Msg("Can't run buzzer")
+		return
+	}
+
+	var b []byte
+
+	if duration > 0 || volume > 0 {
+		b = []byte(fmt.Sprintf(
+			`{"from":32,"method":"local.status","params":"start_alarm,%d,%d"}}`,
+			duration, volume,
+		))
+	} else {
+		b = []byte(`{"from":32,"method":"local.status","params":"stop_alarm"}}`)
+	}
+
+	if _, err := pair.inc.Write(b); err != nil {
+		log.Warn().Err(err).Send()
+	}
+}
