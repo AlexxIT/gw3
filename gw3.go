@@ -49,12 +49,11 @@ func main() {
 	// run daemon_miio.sh what runs other apps from /tmp or /bin
 	shellRunDaemon()
 
-	go btchipReader()
-	go btchipWriter()
-
-	go btappReader()
-	go mqttReader()
 	go miioReader()
+	go mqttReader()
+
+	go btchipReader()
+	go btappReader()
 
 	select {} // run forever
 }

@@ -37,6 +37,8 @@ const (
 
 // btchipReader loops reading data from BT chip
 func btchipReader() {
+	go btchipWriter()
+
 	var p = make([]byte, 260) // max payload size + 4
 
 	var skipBuf = make([]byte, 256)
