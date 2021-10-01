@@ -149,6 +149,8 @@ func shellPatchApp(filename string) bool {
 	case "daemon_miio.sh":
 		// silabs_ncp_bt will work with out proxy-TTY
 		data = bytes.Replace(data, []byte("ttyS1"), []byte("ttyp8"), 1)
+		// old fimware v1.4.6
+		data = bytes.Replace(data, []byte("$APP_PATH/"), []byte(""), -1)
 	case "silabs_ncp_bt":
 		// Zigbee and Bluetooth data is broken when writing to NAND. So we moving sqlite database to memory (tmp).
 		// It's not a problem to lose this base, because the gateway will restore it from the cloud.
