@@ -43,12 +43,9 @@ func main() {
 		shellKillall("zigbee_gw")
 	}
 
-	// patch and kill miio_agent if needed
-	if shellPatchApp("miio_agent") {
-		shellKillall("miio_agent")
-	}
 	// patch daemon_miio.sh if needed
 	shellPatchApp("daemon_miio.sh")
+
 	// run daemon_miio.sh what runs other apps from /tmp or /bin
 	shellRunDaemon()
 

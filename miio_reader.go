@@ -10,6 +10,10 @@ import (
 )
 
 func miioReader() {
+	shellPatchApp("miio_agent")
+	// it is better to kill the miio_agent anyway
+	shellKillall("miio_agent")
+
 	_ = os.Remove("/tmp/miio_agent.socket")
 
 	sock, err := net.Listen("unixpacket", "/tmp/miio_agent.socket")
