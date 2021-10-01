@@ -118,9 +118,18 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 					}
 				}
 			case Gateway:
-				if incoming && data.GetString("method", "") == "properties_changed" {
+				switch data.GetString("method", "") {
+				case "properties_changed":
 					if props := data.GetArrayItem("params", 0); props != nil {
 						miioDecodeGatewayProps(props)
+					}
+				case "local.report":
+					if params := data.GetDict("params"); params != nil {
+						if button, ok := params.TryGetString("button"); ok {
+							// click and double_click
+							data = &dict.Dict{"action": button}
+							gw.updateEvent(data)
+						}
 					}
 				}
 			}
@@ -222,14 +231,17 @@ func miioEncodeGatewayBuzzer(duration uint64, volume uint8) {
 	}
 
 	var b []byte
+	id := uint32(time.Now().Nanosecond()) & 0xFFFFFF
 
-	if duration > 0 || volume > 0 {
+	if volume > 0 {
 		b = []byte(fmt.Sprintf(
-			`{"from":32,"method":"local.status","params":"start_alarm,%d,%d"}}`,
-			duration, volume,
+			`{"from":32,"id":%d,"method":"local.status","params":"start_alarm,%d,%d"}`,
+			id, duration, volume,
 		))
 	} else {
-		b = []byte(`{"from":32,"method":"local.status","params":"stop_alarm"}}`)
+		b = []byte(fmt.Sprintf(
+			`{"from":32,"id":%d,"method":"local.status","params":"stop_alarm"}`, id,
+		))
 	}
 
 	if _, err := pair.inc.Write(b); err != nil {
