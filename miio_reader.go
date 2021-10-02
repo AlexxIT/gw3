@@ -68,8 +68,6 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 		msg = "<-miio"
 	}
 
-	var fixZigbee3Bind uint32
-
 	var b = make([]byte, 1024)
 	for {
 		n, err := conn1.Read(b)
@@ -108,17 +106,6 @@ func miioSocketProxy(conn1, conn2 net.Conn, incoming bool, addr *uint8) {
 							(*param)["action"] = "heartbeat"
 							gw.updateEvent(param)
 						}
-					case "_sync.zigbee3_bind":
-						fixZigbee3Bind = data.GetUint32("id", 0)
-					}
-				} else {
-					if fixZigbee3Bind > 0 && data.GetUint32("id", 0) == fixZigbee3Bind {
-						log.Info().Msg("Patch zigbee3_bind command")
-
-						s := fmt.Sprintf(`{"result":{"code":0,"message":"ok"},"id":%d}`, fixZigbee3Bind)
-						n = copy(b, s)
-
-						fixZigbee3Bind = 0
 					}
 				}
 			case Gateway:
