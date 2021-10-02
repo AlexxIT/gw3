@@ -104,6 +104,10 @@ func (d *GatewayDevice) setState(p []byte) {
 		}
 	}
 
+	if value, ok := payload.TryGetString("log"); ok {
+		mainInitLogger(value)
+	}
+
 	if value, ok := payload.TryGetString("test"); ok {
 		switch value {
 		case "error":

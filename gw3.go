@@ -83,13 +83,8 @@ func mainInitConfig() {
 	mainInitLogger(*logs)
 }
 
-var (
-	// additional log levels for advanced output
-	btraw   = zerolog.Disabled
-	btgap   = zerolog.Disabled
-	btskip  = zerolog.WarnLevel
-	miioraw = zerolog.Disabled
-)
+// additional log levels for advanced output
+var btraw, btgap, btskip, miioraw zerolog.Level
 
 // log levels: debug, info, warn (default)
 // advanced debug:
@@ -109,15 +104,23 @@ func mainInitLogger(logs string) {
 
 	if strings.Contains(logs, "btraw") {
 		btraw = zerolog.NoLevel
+	} else {
+		btraw = zerolog.Disabled
 	}
 	if strings.Contains(logs, "btgap") {
 		btgap = zerolog.NoLevel
+	} else {
+		btgap = zerolog.Disabled
 	}
 	if strings.Contains(logs, "btskip") {
 		btskip = zerolog.Disabled
+	} else {
+		btskip = zerolog.WarnLevel
 	}
 	if strings.Contains(logs, "miio") {
 		miioraw = zerolog.NoLevel
+	} else {
+		miioraw = zerolog.Disabled
 	}
 
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
