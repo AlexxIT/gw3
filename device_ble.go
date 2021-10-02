@@ -43,6 +43,7 @@ var brands = []string{
 	"mi:1254", "Yeelight", "Fan Remote", "YLYK01YL-VENFAN",
 	"mi:1371", "Xiaomi", "TH Sensor 2", "LYWSD03MMC",
 	"mi:1398", "Xiaomi", "Alarm Clock", "CGD1",
+	"mi:1433", "Xiaomi", "Door Lock", "MJZNMS03LM",
 	"mi:1647", "Xiaomi", "Qingping TH Lite", "CGDK2",
 	"mi:1678", "Yeelight", "Fan Remote", "YLYK01YL-FANCL",
 	"mi:1694", "Aqara", "Door Lock N100", "ZNMS16LM",
