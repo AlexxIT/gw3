@@ -86,3 +86,22 @@ If you are still here:
 5. Reboot gateway
 
 **PS:** gw3 binary can run on the original gateway firmware. Custom firmware is an optional step that just makes your life easier. Custom firmware doesn't change default gateway functionality in Mi Home ecosystem.
+
+## Debug
+
+- Support levels: `debug`, `info`, warn (default)
+- Support output: `syslog`, `mqtt`, stdout (default)
+- Support format: `text` (nocolor), `json`, color (default)
+- Support more debug: `btraw`, `btgap`, `miio`
+
+Example: debug logs in json format to MQTT:
+
+```shell
+/data/gw3 -log=mqtt,json,debug
+```
+
+Or change logs while app running:
+
+```shell
+mosquitto_pub -t gw3/AA:BB:CC:DD:EE:FF/set -m '{"log":"syslog,info,text"}'
+```
