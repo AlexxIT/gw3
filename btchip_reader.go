@@ -108,18 +108,24 @@ func btchipReader() {
 				shellPatchTimerStop()
 				state = StateReset
 				gw.updateState("setup")
+
 				if !bglib.IsResetCmd(btchipReq) {
 					// silabs_ncp_bt reboot chip at startup using GPIO
 					log.Info().Str("state", "hardreset").Msg("Bluetooth state")
+					// clear queue on hardreset
+					btchipQueueClear()
 					// no need to forward event in this case
 					continue
 				}
 				log.Info().Str("state", "softreset").Msg("Bluetooth state")
+
+				// clear resp only after softreset
+				btchipRespClear()
 			case bglib.Evt_le_gap_extended_scan_response:
 				n = btchipProcessExtResponse(p[:n])
 			}
 
-			if p[0] == 0x20 || header == bglib.Evt_system_boot {
+			if p[0] == 0x20 {
 				btchipRespClear()
 			}
 
