@@ -84,7 +84,7 @@ func btchipReader() {
 			case bglib.Evt_le_gap_extended_scan_response:
 				log.WithLevel(btgap).Hex("data", p[:n]).Msg("<-btgap")
 			default:
-				log.WithLevel(btraw).Hex("data", p[:n]).Msg("<-btraw")
+				log.WithLevel(btraw).Hex("data", p[:n]).Int("q", len(btchipQueue)).Msg("<-btraw")
 			}
 
 			// process data
@@ -175,7 +175,7 @@ var btchipReq []byte
 
 func btchipWriter() {
 	for btchipReq = range btchipQueue {
-		log.WithLevel(btraw).Hex("data", btchipReq).Msg("btraw<-")
+		log.WithLevel(btraw).Hex("data", btchipReq).Int("q", len(btchipQueue)).Msg("btraw<-")
 
 		if _, err := btchip.Write(btchipReq); err != nil {
 			log.Panic().Err(err).Send()
